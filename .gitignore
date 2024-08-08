@@ -3,3 +3,6 @@ data/
 data_anonymization.ipynb
 .devcontainer/
 .github/
+articles/Attention-based-Skin-Cancer-Classification/env/
+articles/Attention-based-Skin-Cancer-Classification/notebook/IRV2+SA.h5
+articles/FixCaps/INSTRUCTIONS.md
