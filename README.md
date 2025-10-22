@@ -6,7 +6,7 @@ This repository contains the codebase, notebooks, and figures supporting the pub
 
 ## 🧠 Project Summary
 
-We introduce **Predictive Representativity (PR)** and an **External Transportability Criterion** to audit how well machine learning models generalize fairness across demographic groups, particularly between light and dark skin phototypes.
+We introduce **Predictive Representativity (PR)** and an **External Transportability Criterion (ETC)** to audit how well machine learning models generalize fairness across demographic groups, particularly between light and dark skin phototypes.
 
 Our case study evaluates several convolutional neural network (CNN) classifiers on the **BOSQUE** test dataset from Colombia, highlighting how models trained on demographically balanced datasets (like HAM10000) may underperform on underrepresented populations.
 
@@ -34,3 +34,4 @@ DermAlgoFairness/
 │
 ├── dockerfile             # Docker setup for GPU-enabled reproducibility
 └── README.md              # Project documentation (you are here)
+
