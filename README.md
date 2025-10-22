@@ -4,7 +4,7 @@
 
 This repository contains the codebase, notebooks, and figures supporting the publication on **Predictive Representativity (PR)** — a framework for fairness auditing in medical AI, applied to skin cancer diagnosis models trained on the HAM10000 dataset.
 
-## 🧠 Project Summary
+## Project Summary
 
 We introduce **Predictive Representativity (PR)** and an **External Transportability Criterion (ETC)** to audit how well machine learning models generalize fairness across demographic groups, particularly between light and dark skin phototypes.
 
@@ -12,7 +12,7 @@ Our case study evaluates several convolutional neural network (CNN) classifiers 
 
 ---
 
-## 📂 Repository Structure
+## Repository Structure
 
 ```bash
 DermAlgoFairness/
@@ -34,4 +34,5 @@ DermAlgoFairness/
 │
 ├── dockerfile             # Docker setup for GPU-enabled reproducibility
 └── README.md              # Project documentation (you are here)
+
 
