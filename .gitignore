@@ -7,3 +7,31 @@ articles/Attention-based-Skin-Cancer-Classification/env/
 articles/Attention-based-Skin-Cancer-Classification/notebook/IRV2+SA.h5
 articles/FixCaps/INSTRUCTIONS.md
 articles/Attention-based-Skin-Cancer-Classification/notebook/IRV2+SA.hdf5
+articles/Attention-based-Skin-Cancer-Classification/INSTRUCTIONS.md
+
+# ---------------------------------------------------------------------
+# Local data, models, and generated experiment artifacts
+# ---------------------------------------------------------------------
+benchmarks/
+data/raw/
+data/external/
+data/interim/
+data/processed/
+data/collected/
+confidential_data/
+outputs/
+output/
+*.h5
+*.hdf5
+*.keras
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.tar
+*.zip
+*.7z
+*.log
+.ipynb_checkpoints/
+__pycache__/
+.env
