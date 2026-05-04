@@ -13,7 +13,6 @@ opencv-python-headless
 Pillow
 
 # Class imbalance handling
-imbalanced-learn
 
 # Deep learning stack
 tensorflow==2.13.0

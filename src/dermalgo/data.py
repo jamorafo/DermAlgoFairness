@@ -211,3 +211,106 @@ def summarize_ham10000(df: pd.DataFrame) -> dict[str, object]:
         "benign_malignant_counts": df["benign_malignant"].value_counts(dropna=False).to_dict(),
         "label_binary_counts": df["label_binary"].value_counts(dropna=False).to_dict(),
     }
+
+
+def split_ham10000(
+    df: pd.DataFrame,
+    test_size: float = 0.2,
+    validation_fraction_of_temp: float = 0.5,
+    seed: int = 1,
+    stratify_column: str = "label_binary",
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Split HAM10000 into train, validation, and internal test sets.
+
+    The split is performed before any oversampling.
+
+    With the default values:
+    - 80% train
+    - 10% validation
+    - 10% internal test
+    """
+    from sklearn.model_selection import train_test_split
+
+    if stratify_column not in df.columns:
+        raise ValueError(f"Stratify column not found: {stratify_column}")
+
+    train_df, temp_df = train_test_split(
+        df,
+        test_size=test_size,
+        random_state=seed,
+        stratify=df[stratify_column],
+    )
+
+    val_df, test_df = train_test_split(
+        temp_df,
+        test_size=validation_fraction_of_temp,
+        random_state=seed,
+        stratify=temp_df[stratify_column],
+    )
+
+    return (
+        train_df.reset_index(drop=True),
+        val_df.reset_index(drop=True),
+        test_df.reset_index(drop=True),
+    )
+
+
+def oversample_training_dataframe(
+    train_df: pd.DataFrame,
+    label_column: str = "label_binary",
+    seed: int = 1,
+) -> pd.DataFrame:
+    """Randomly oversample the training dataframe only.
+
+    This duplicates rows from minority classes in the training set until all
+    classes have the same number of rows as the majority class.
+
+    It must be called only after train/validation/test splitting.
+    """
+    if label_column not in train_df.columns:
+        raise ValueError(f"Label column not found: {label_column}")
+
+    counts = train_df[label_column].value_counts(dropna=False)
+    max_count = int(counts.max())
+
+    sampled_parts = []
+    for label_value, group in train_df.groupby(label_column, dropna=False):
+        replace = len(group) < max_count
+        sampled = group.sample(
+            n=max_count,
+            replace=replace,
+            random_state=seed,
+        )
+        sampled_parts.append(sampled)
+
+    sampled_df = (
+        pd.concat(sampled_parts, axis=0)
+        .sample(frac=1.0, random_state=seed)
+        .reset_index(drop=True)
+    )
+    return sampled_df
+
+
+def summarize_split(
+    train_df: pd.DataFrame,
+    val_df: pd.DataFrame,
+    test_df: pd.DataFrame,
+    label_column: str = "label_binary",
+) -> pd.DataFrame:
+    """Return class counts for train, validation, and test splits."""
+    rows = []
+    for split_name, split_df in [
+        ("train", train_df),
+        ("validation", val_df),
+        ("test", test_df),
+    ]:
+        counts = split_df[label_column].value_counts(dropna=False).sort_index()
+        for label, n in counts.items():
+            rows.append(
+                {
+                    "split": split_name,
+                    "label": label,
+                    "n": int(n),
+                }
+            )
+    return pd.DataFrame(rows)
