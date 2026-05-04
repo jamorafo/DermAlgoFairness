@@ -12,7 +12,7 @@ data:
   external_test_dataset: BOSQUE_public
   ham10000_root: data/raw
   ham10000_metadata: data/raw/HAM10000_metadata.csv
-  bosque_root: data/external/bosque
+  bosque_root: data/external/bosque_public
   benign_labels: [nv, bkl, df, vasc]
   malignant_labels: [mel, bcc, akiec]
   light_phototypes: [1, 2, 3]
