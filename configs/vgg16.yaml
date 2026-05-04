@@ -1,0 +1,54 @@
+model:
+  name: vgg16
+  keras_application: VGG16
+  imagenet_pretrained: true
+  input_size: [224, 224]
+  dense_units: 1024
+  dropout: 0.5
+  trainable_last_layers: 100
+
+data:
+  train_dataset: HAM10000
+  external_test_dataset: BOSQUE_public
+  ham10000_root: data/raw
+  ham10000_metadata: data/raw/HAM10000_metadata.csv
+  bosque_root: data/external/bosque
+  benign_labels: [nv, bkl, df, vasc]
+  malignant_labels: [mel, bcc, akiec]
+  light_phototypes: [1, 2, 3]
+  dark_phototypes: [4, 5, 6]
+
+split:
+  test_size: 0.2
+  validation_fraction_of_temp: 0.5
+  stratify: true
+
+training:
+  batch_size: 16
+  epochs: 100
+  optimizer: adam
+  learning_rate: 0.000001
+  loss: binary_crossentropy
+  early_stopping_monitor: val_loss
+  early_stopping_patience: 15
+  class_weight: balanced
+  oversampling: train_only
+  seeds: [1, 2, 3, 4, 5]
+
+evaluation:
+  threshold: 0.5
+  metrics:
+    - accuracy
+    - precision
+    - recall
+    - specificity
+    - f1
+    - auc_roc
+    - auc_pr
+
+outputs:
+  models_dir: outputs/models
+  predictions_dir: outputs/predictions
+  tables_dir: outputs/tables
+  figures_dir: outputs/figures
+  logs_dir: outputs/logs
