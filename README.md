@@ -45,3 +45,10 @@ DermAlgoFairness/
 
 3. **Tschandl, P., Rosendahl, C., & Kittler, H.** (2018). *The HAM10000 dataset, a large collection of multi-source dermatoscopic images of common pigmented skin lesions.* *Scientific Data, 5*, 180161. [https://doi.org/10.1038/sdata.2018.161](https://doi.org/10.1038/sdata.2018.161)
 
+## Revised public results workflow
+
+The branch `arxiv-results-revision-2026` contains the standardized workflow for revising and extending the public arXiv-related results using the published public version of the BOSQUE dataset from Harvard Dataverse.
+
+The revised workflow focuses on scripted experiment execution, explicit environment documentation, saved per-image predictions, repeated runs to quantify training stochasticity, and reproducible statistical analysis.
+
+See [`docs/arxiv_results_revision.md`](docs/arxiv_results_revision.md) for details.
