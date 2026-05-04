@@ -83,6 +83,7 @@ def load_bosque_public(
         "file_name",
         "image_id",
         "skin_phototype",
+        "lesion_nature",
         "clinical_label",
         "histology_label",
     }
@@ -100,8 +101,9 @@ def load_bosque_public(
     df["clinical_label"] = df["clinical_label"].map(normalize_label)
     df["histology_label"] = df["histology_label"].map(normalize_label)
 
-    # The public metadata provides clinical_label as benign/malignant.
-    df["benign_malignant"] = df["clinical_label"]
+    df["lesion_nature"] = df["lesion_nature"].map(normalize_label)
+    df["benign_malignant"] = df["lesion_nature"]
+    df["label_binary"] = df["benign_malignant"].map({"benign": 0, "malignant": 1})
 
     df["skin_group"] = df["skin_phototype"].apply(
         lambda value: skin_group_from_phototype(
@@ -131,4 +133,81 @@ def summarize_bosque_public(df: pd.DataFrame) -> dict[str, object]:
         "clinical_label_by_skin_group": (
             df.groupby(["skin_group", "clinical_label"]).size().to_dict()
         ),
+    }
+
+
+def load_ham10000(
+    ham10000_root: str | Path = "data/raw",
+    metadata_filename: str = "HAM10000_metadata.csv",
+    benign_labels: Iterable[str] = ("nv", "bkl", "df", "vasc"),
+    malignant_labels: Iterable[str] = ("mel", "bcc", "akiec"),
+) -> pd.DataFrame:
+    """Load HAM10000 metadata and resolve image paths.
+
+    Returns a dataframe with one row per image and standardized columns:
+    - lesion_id
+    - image_id
+    - image_path
+    - dx
+    - benign_malignant
+    - label_binary
+
+    label_binary convention:
+    - 0 = benign
+    - 1 = malignant
+    """
+    root = resolve_project_path(ham10000_root)
+    metadata_path = root / metadata_filename
+
+    if not metadata_path.exists():
+        raise FileNotFoundError(f"HAM10000 metadata not found: {metadata_path}")
+
+    df = pd.read_csv(metadata_path)
+
+    required_columns = {"lesion_id", "image_id", "dx"}
+    missing = sorted(required_columns - set(df.columns))
+    if missing:
+        raise ValueError(f"Missing required HAM10000 metadata columns: {missing}")
+
+    benign_set = {normalize_label(x) for x in benign_labels}
+    malignant_set = {normalize_label(x) for x in malignant_labels}
+
+    df = df.copy()
+    df["dx"] = df["dx"].map(normalize_label)
+    df["image_path"] = df["image_id"].apply(lambda image_id: str(root / f"{image_id}.jpg"))
+    df["image_exists"] = df["image_path"].apply(lambda p: Path(p).exists())
+
+    def map_binary_label(dx: str) -> str:
+        if dx in benign_set:
+            return "benign"
+        if dx in malignant_set:
+            return "malignant"
+        return "unknown"
+
+    df["benign_malignant"] = df["dx"].apply(map_binary_label)
+    df["label_binary"] = df["benign_malignant"].map({"benign": 0, "malignant": 1})
+
+    unknown = df[df["benign_malignant"] == "unknown"]
+    if not unknown.empty:
+        raise ValueError(
+            "Some HAM10000 diagnoses were not mapped to benign/malignant: "
+            f"{sorted(unknown['dx'].unique())}"
+        )
+
+    missing_images = df.loc[~df["image_exists"], ["image_id", "image_path"]]
+    if not missing_images.empty:
+        preview = missing_images.head(10).to_string(index=False)
+        raise FileNotFoundError(f"Some HAM10000 images are missing:\n{preview}")
+
+    return df
+
+
+def summarize_ham10000(df: pd.DataFrame) -> dict[str, object]:
+    """Return basic HAM10000 dataset counts."""
+    return {
+        "n_rows": int(len(df)),
+        "n_images": int(df["image_path"].nunique()),
+        "dx_counts": df["dx"].value_counts(dropna=False).to_dict(),
+        "benign_malignant_counts": df["benign_malignant"].value_counts(dropna=False).to_dict(),
+        "label_binary_counts": df["label_binary"].value_counts(dropna=False).to_dict(),
     }

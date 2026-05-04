@@ -49,10 +49,10 @@ def main() -> None:
     out_dir = ensure_dir(args.out_dir)
 
     dataset_summary_path = out_dir / "bosque_public_dataset_summary.csv"
-    label_counts_path = out_dir / "bosque_public_label_counts.csv"
+    label_counts_path = out_dir / "bosque_public_benign_malignant_counts.csv"
     phototype_counts_path = out_dir / "bosque_public_phototype_counts.csv"
     skin_group_counts_path = out_dir / "bosque_public_skin_group_counts.csv"
-    label_by_group_path = out_dir / "bosque_public_label_by_skin_group.csv"
+    label_by_group_path = out_dir / "bosque_public_benign_malignant_by_skin_group.csv"
 
     dataset_summary = pd.DataFrame(
         [
@@ -66,15 +66,15 @@ def main() -> None:
     )
     dataset_summary.to_csv(dataset_summary_path, index=False)
 
-    write_count_table(df["clinical_label"], label_counts_path, "clinical_label")
+    write_count_table(df["benign_malignant"], label_counts_path, "benign_malignant")
     write_count_table(df["skin_phototype"], phototype_counts_path, "skin_phototype")
     write_count_table(df["skin_group"], skin_group_counts_path, "skin_group")
 
     label_by_group = (
-        df.groupby(["skin_group", "clinical_label"])
+        df.groupby(["skin_group", "benign_malignant"])
         .size()
         .reset_index(name="n")
-        .sort_values(["skin_group", "clinical_label"])
+        .sort_values(["skin_group", "benign_malignant"])
     )
     label_by_group.to_csv(label_by_group_path, index=False)
 
@@ -89,7 +89,7 @@ def main() -> None:
     print(dataset_summary.to_string(index=False))
 
     print()
-    print("Clinical label by skin group:")
+    print("Benign/malignant label by skin group:")
     print(label_by_group.to_string(index=False))
 
 
