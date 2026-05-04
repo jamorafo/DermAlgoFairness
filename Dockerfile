@@ -1,10 +1,10 @@
 # GPU-enabled environment for the DermAlgoFairness revised public results workflow.
 #
 # The host server reports NVIDIA driver 560.35.05 and CUDA 12.6 through nvidia-smi.
-# This image uses a CUDA 12.6 Ubuntu 22.04 base image and installs Python
-# dependencies from requirements.txt.
+# The container uses CUDA 11.8 with cuDNN 8 because this stack is better aligned
+# with TensorFlow 2.13 GPU compatibility.
 
-FROM nvidia/cuda:12.6.1-devel-ubuntu22.04
+FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
