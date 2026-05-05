@@ -149,6 +149,26 @@ def main() -> None:
     metrics_path = tables_dir / f"evaluation_metrics_{run_id}.csv"
     metrics_df.to_csv(metrics_path, index=False)
 
+    subgroup_rows = []
+    for subgroup_name, subgroup_df in bosque_pred.groupby("skin_group"):
+        metrics = compute_binary_metrics(
+            subgroup_df["y_true"].to_numpy(),
+            subgroup_df["y_score"].to_numpy(),
+            threshold=args.threshold,
+        )
+        subgroup_rows.append(
+            {
+                "dataset": "BOSQUE_public",
+                "subgroup_column": "skin_group",
+                "subgroup": subgroup_name,
+                **metrics,
+            }
+        )
+
+    subgroup_metrics_df = pd.DataFrame(subgroup_rows)
+    subgroup_metrics_path = tables_dir / f"evaluation_metrics_by_subgroup_{run_id}.csv"
+    subgroup_metrics_df.to_csv(subgroup_metrics_path, index=False)
+
     manifest = {
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "run_id": run_id,
@@ -159,6 +179,7 @@ def main() -> None:
         "ham10000_predictions_path": str(ham_pred_path),
         "bosque_predictions_path": str(bosque_pred_path),
         "metrics_path": str(metrics_path),
+        "subgroup_metrics_path": str(subgroup_metrics_path),
     }
     manifest_path = logs_dir / f"evaluation_manifest_{run_id}.json"
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
@@ -169,6 +190,7 @@ def main() -> None:
     print(f"Wrote HAM10000 predictions: {ham_pred_path}")
     print(f"Wrote BOSQUE predictions: {bosque_pred_path}")
     print(f"Wrote metrics: {metrics_path}")
+    print(f"Wrote subgroup metrics: {subgroup_metrics_path}")
     print(f"Wrote manifest: {manifest_path}")
 
 
