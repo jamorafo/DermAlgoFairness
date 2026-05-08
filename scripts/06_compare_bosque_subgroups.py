@@ -145,12 +145,63 @@ def main():
 
     out_df = pd.DataFrame(rows)
 
+    # Benjamini-Hochberg FDR correction across all model-metric comparisons.
+    out_df = out_df.sort_values("p_value_bootstrap").reset_index(drop=True)
+    m = len(out_df)
+    ranks = np.arange(1, m + 1)
+    raw = out_df["p_value_bootstrap"].astype(float).to_numpy()
+
+    bh = raw * m / ranks
+    bh = np.minimum.accumulate(bh[::-1])[::-1]
+    bh = np.clip(bh, 0, 1)
+
+    out_df["p_value_fdr_bh"] = bh
+    out_df["significant_fdr_0_05"] = out_df["p_value_fdr_bh"] < 0.05
+
+    # Restore readable ordering.
+    model_order = {name: i for i, name in enumerate(models)}
+    metric_order = {name: i for i, name in enumerate(METRICS)}
+    out_df["model_order"] = out_df["model"].map(model_order)
+    out_df["metric_order"] = out_df["metric"].map(metric_order)
+    out_df = out_df.sort_values(["model_order", "metric_order"]).drop(columns=["model_order", "metric_order"])
+
     out_path = Path("outputs/tables/bosque_light_dark_bootstrap_comparison.csv")
     out_df.to_csv(out_path, index=False)
 
+    readable = out_df.copy()
+    numeric_cols = [
+        "dark", "light", "gap_light_minus_dark",
+        "bootstrap_ci_low", "bootstrap_ci_high",
+        "z_bootstrap", "p_value_bootstrap", "p_value_fdr_bh",
+    ]
+    for col in numeric_cols:
+        if col in readable.columns:
+            readable[col] = readable[col].astype(float).round(4)
+
+    def stars(p):
+        if p < 0.001:
+            return "***"
+        if p < 0.01:
+            return "**"
+        if p < 0.05:
+            return "*"
+        return ""
+
+    readable["sig_fdr"] = readable["p_value_fdr_bh"].apply(stars)
+
+    readable_path = Path("outputs/tables/bosque_light_dark_bootstrap_comparison_readable.csv")
+    readable.to_csv(readable_path, index=False)
+
     print("Wrote:", out_path)
+    print("Wrote:", readable_path)
     print()
-    print(out_df.to_string(index=False))
+    print("FDR-significant gaps only:")
+    cols = [
+        "model", "metric", "dark", "light", "gap_light_minus_dark",
+        "bootstrap_ci_low", "bootstrap_ci_high",
+        "p_value_bootstrap", "p_value_fdr_bh", "sig_fdr",
+    ]
+    print(readable[readable["significant_fdr_0_05"]][cols].to_string(index=False))
 
 
 if __name__ == "__main__":
