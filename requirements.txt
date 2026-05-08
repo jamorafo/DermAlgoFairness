@@ -1,0 +1,24 @@
+# Core scientific stack
+numpy
+pandas
+scipy
+scikit-learn
+statsmodels
+matplotlib
+tqdm
+PyYAML
+
+# Image processing
+opencv-python-headless
+Pillow
+
+# Class imbalance handling
+
+# Deep learning stack
+tensorflow==2.13.0
+keras
+
+# Notebook and inspection utilities
+jupyter
+nbconvert
+ipykernel
