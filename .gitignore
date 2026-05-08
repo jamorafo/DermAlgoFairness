@@ -35,3 +35,21 @@ output/
 .ipynb_checkpoints/
 __pycache__/
 .env
+
+# Data
+data/raw/
+data/external/
+data/processed/
+
+# Model artifacts
+outputs/models/
+outputs/predictions/
+outputs/logs/
+
+# Large/intermediate tables
+outputs/tables/*_all_seed_metrics.csv
+outputs/tables/*_all_seed_subgroup_metrics.csv
+
+# Python cache
+__pycache__/
+*.pyc
