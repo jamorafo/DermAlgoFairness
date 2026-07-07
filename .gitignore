@@ -53,3 +53,4 @@ outputs/tables/*_all_seed_subgroup_metrics.csv
 # Python cache
 __pycache__/
 *.pyc
+.venv/
