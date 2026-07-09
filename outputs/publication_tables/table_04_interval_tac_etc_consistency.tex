@@ -1,34 +1,46 @@
-\begin{table}[htbp]
+\begin{table}[h!]
 \centering
-\small
+\scriptsize
 \caption{Interval-based TAC/ETC decision consistency across model--seed replicas.}
 \label{tab:interval-tac-etc-consistency}
-\setlength{\tabcolsep}{4pt}
+\setlength{\tabcolsep}{3pt}
 \renewcommand{\arraystretch}{1.08}
-\begin{tabular}{llrrrr}
+\begin{tabular}{lllrrrrrrr}
 \toprule
-\textbf{Metric} & \textbf{Target condition} & \textbf{Adeq. + transp.} & \textbf{Inconc.} & \textbf{Not adeq. + not transp.} & \textbf{Total} \\
+\textbf{Group} & \textbf{Metric} & \textbf{Target} & \textbf{Adeq. + transp.} & \textbf{Inconc.} & \textbf{Not adeq. + not transp.} & \textbf{Transp. but inad.} & \textbf{Adeq. but not transp.} & \textbf{Unresolved} & \textbf{Total} \\
 \midrule
-Recall / sensitivity & Overall & 0 & 16 & 9 & 25 \\
- & Light phototype & 0 & 18 & 7 & 25 \\
- & Dark phototype & 0 & 19 & 6 & 25 \\
+Primary & Recall / sensitivity & Overall & 0 & 16 & 9 & 0 & 0 & 0 & 25 \\
+ &  & Light phototype & 0 & 18 & 7 & 0 & 0 & 0 & 25 \\
+ &  & Dark phototype & 0 & 18 & 7 & 0 & 0 & 0 & 25 \\
 \addlinespace
-AUC-PR & Overall & 10 & 15 & 0 & 25 \\
- & Light phototype & 22 & 3 & 0 & 25 \\
- & Dark phototype & 0 & 25 & 0 & 25 \\
+ & AUC-PR & Overall & 9 & 16 & 0 & 0 & 0 & 0 & 25 \\
+ &  & Light phototype & 22 & 3 & 0 & 0 & 0 & 0 & 25 \\
+ &  & Dark phototype & 0 & 25 & 0 & 0 & 0 & 0 & 25 \\
 \addlinespace
-F1-score & Overall & 2 & 23 & 0 & 25 \\
- & Light phototype & 5 & 20 & 0 & 25 \\
- & Dark phototype & 0 & 24 & 1 & 25 \\
+ & F1-score & Overall & 2 & 23 & 0 & 0 & 0 & 0 & 25 \\
+ &  & Light phototype & 5 & 20 & 0 & 0 & 0 & 0 & 25 \\
+ &  & Dark phototype & 0 & 24 & 1 & 0 & 0 & 0 & 25 \\
 \addlinespace
-Precision & Overall & 15 & 10 & 0 & 25 \\
- & Light phototype & 24 & 1 & 0 & 25 \\
- & Dark phototype & 1 & 24 & 0 & 25 \\
+ & Precision & Overall & 15 & 10 & 0 & 0 & 0 & 0 & 25 \\
+ &  & Light phototype & 24 & 1 & 0 & 0 & 0 & 0 & 25 \\
+ &  & Dark phototype & 1 & 24 & 0 & 0 & 0 & 0 & 25 \\
+\addlinespace
+Secondary & Accuracy & Overall & 0 & 5 & 20 & 0 & 0 & 0 & 25 \\
+ &  & Light phototype & 0 & 6 & 19 & 0 & 0 & 0 & 25 \\
+ &  & Dark phototype & 0 & 19 & 6 & 0 & 0 & 0 & 25 \\
+\addlinespace
+ & Specificity & Overall & 1 & 24 & 0 & 0 & 0 & 0 & 25 \\
+ &  & Light phototype & 1 & 24 & 0 & 0 & 0 & 0 & 25 \\
+ &  & Dark phototype & 1 & 22 & 2 & 0 & 0 & 0 & 25 \\
+\addlinespace
+ & AUC-ROC & Overall & 0 & 19 & 6 & 0 & 0 & 0 & 25 \\
+ &  & Light phototype & 0 & 24 & 1 & 0 & 0 & 0 & 25 \\
+ &  & Dark phototype & 0 & 21 & 4 & 0 & 0 & 0 & 25 \\
 \addlinespace
 \bottomrule
 \end{tabular}
 \begin{flushleft}
 \footnotesize
-Notes: Each row summarizes 25 model--seed decisions, corresponding to five architectures trained under five random seeds. TAC denotes the Target Adequacy Criterion and ETC denotes the External Transportability Criterion. Decisions are interval-based. ``Adeq. + transp.'' indicates that the lower confidence bound for target performance exceeded the adequacy threshold and the upper confidence bound for source-to-target degradation did not exceed the admissible degradation margin. ``Not adeq. + not transp.'' indicates that the upper confidence bound for target performance remained below the adequacy threshold and the lower confidence bound for degradation exceeded the admissible margin. All other cases are classified as inconclusive.
+Notes: Each row summarizes model--seed decisions across five architectures and five random seeds. Primary metrics are used for the main PR/TAC/ETC interpretation. Secondary metrics are reported descriptively. TAC denotes the Target Adequacy Criterion and ETC denotes the External Transportability Criterion. Decisions are interval-based.
 \end{flushleft}
 \end{table}

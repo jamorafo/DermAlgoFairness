@@ -7,7 +7,7 @@ Interval-based TAC/ETC analysis for image-based diagnostic AI.
 This script implements a Chapter-5-consistent TAC/ETC analysis using
 prediction-level files rather than summary means.
 
-For each locked model replica f_{a,s}, it estimates:
+It estimates, for each locked model replica f_{a,s}:
 
   theta_S^M       = source overall performance
   theta_T^M       = target overall performance
@@ -19,12 +19,9 @@ and the benchmark-preservation degradation:
 
 Positive degradation means target performance is lower than source performance.
 
-The script computes percentile bootstrap intervals for:
-  - target performance
-  - source performance
-  - source-to-target degradation
-
-It then applies interval-based TAC and ETC decision rules.
+Metrics are divided into:
+  - primary validation metrics used for the main PR/TAC/ETC interpretation
+  - secondary descriptive metrics reported for completeness
 """
 
 from pathlib import Path
@@ -54,36 +51,65 @@ FIGURES.mkdir(parents=True, exist_ok=True)
 
 
 # ---------------------------------------------------------------------
-# User-defined validation thresholds
+# Metric configuration
 # ---------------------------------------------------------------------
 
+PRIMARY_METRICS = ["recall", "auc_pr", "f1", "precision"]
+SECONDARY_METRICS = ["accuracy", "specificity", "auc_roc"]
+
+METRIC_ORDER = PRIMARY_METRICS + SECONDARY_METRICS
+
 METRIC_CONFIG = {
+    # Primary validation metrics
     "recall": {
         "tau": 0.70,
         "epsilon": 0.05,
         "label": "Recall / sensitivity",
-    },
-    "f1": {
-        "tau": 0.70,
-        "epsilon": 0.05,
-        "label": "F1-score",
+        "metric_group": "Primary",
     },
     "auc_pr": {
         "tau": 0.85,
         "epsilon": 0.05,
         "label": "AUC-PR",
+        "metric_group": "Primary",
+    },
+    "f1": {
+        "tau": 0.70,
+        "epsilon": 0.05,
+        "label": "F1-score",
+        "metric_group": "Primary",
     },
     "precision": {
         "tau": 0.80,
         "epsilon": 0.05,
         "label": "Precision",
+        "metric_group": "Primary",
+    },
+
+    # Secondary descriptive metrics
+    "accuracy": {
+        "tau": 0.80,
+        "epsilon": 0.05,
+        "label": "Accuracy",
+        "metric_group": "Secondary",
+    },
+    "specificity": {
+        "tau": 0.80,
+        "epsilon": 0.05,
+        "label": "Specificity",
+        "metric_group": "Secondary",
+    },
+    "auc_roc": {
+        "tau": 0.85,
+        "epsilon": 0.05,
+        "label": "AUC-ROC",
+        "metric_group": "Secondary",
     },
 }
 
 N_BOOT = 2000
 RANDOM_STATE = 20260708
 THRESHOLD = 0.5
-
 
 MODEL_ORDER = [
     "ResNet50",
@@ -92,6 +118,8 @@ MODEL_ORDER = [
     "EfficientNetV2B0",
     "VGG16",
 ]
+
+TARGET_ORDER = ["BOSQUE overall", "BOSQUE light", "BOSQUE dark"]
 
 
 # ---------------------------------------------------------------------
@@ -114,15 +142,6 @@ def normalize_model(x):
 
 
 def parse_model_seed(path):
-    """
-    Parse model and seed from prediction filenames such as:
-
-      ham10000_internal_test_predictions_resnet50_seed1_....csv
-      bosque_public_predictions_resnet50_seed1_....csv
-
-    The function is intentionally permissive.
-    """
-
     name = path.name.lower()
 
     model = None
@@ -215,8 +234,7 @@ def metric_value(y_true, y_score, metric):
     y_score = np.asarray(y_score).astype(float)
     y_pred = (y_score >= THRESHOLD).astype(int)
 
-    # Guard against degenerate bootstrap samples.
-    if metric in {"roc_auc", "auc_roc", "auc_pr"}:
+    if metric in {"auc_roc", "auc_pr"}:
         if len(np.unique(y_true)) < 2:
             return np.nan
 
@@ -229,10 +247,15 @@ def metric_value(y_true, y_score, metric):
     if metric == "recall":
         return recall_score(y_true, y_pred, zero_division=0)
 
+    if metric == "specificity":
+        tn = ((y_true == 0) & (y_pred == 0)).sum()
+        fp = ((y_true == 0) & (y_pred == 1)).sum()
+        return np.nan if (tn + fp) == 0 else tn / (tn + fp)
+
     if metric == "f1":
         return f1_score(y_true, y_pred, zero_division=0)
 
-    if metric in {"auc_roc", "roc_auc"}:
+    if metric == "auc_roc":
         return roc_auc_score(y_true, y_score)
 
     if metric == "auc_pr":
@@ -252,20 +275,6 @@ def percentile_interval(values, alpha=0.05):
         np.percentile(values, 100 * alpha / 2),
         np.percentile(values, 100 * (1 - alpha / 2)),
     )
-
-
-def bootstrap_target_interval(df, metric, rng, n_boot=N_BOOT):
-    n = len(df)
-    values = []
-
-    y = df["y_true"].to_numpy()
-    s = df["y_score"].to_numpy()
-
-    for _ in range(n_boot):
-        idx = rng.integers(0, n, size=n)
-        values.append(metric_value(y[idx], s[idx], metric))
-
-    return np.asarray(values, dtype=float)
 
 
 def bootstrap_degradation_interval(source_df, target_df, metric, rng, n_boot=N_BOOT):
@@ -354,8 +363,10 @@ def make_target_subsets(target_df):
     }
 
     if "skin_group" in target_df.columns:
-        for group in ["dark", "light"]:
-            subset = target_df[target_df["skin_group"].astype(str).str.lower() == group].copy()
+        for group in ["light", "dark"]:
+            subset = target_df[
+                target_df["skin_group"].astype(str).str.lower() == group
+            ].copy()
             if len(subset) > 0:
                 out[f"BOSQUE {group}"] = subset
 
@@ -374,6 +385,8 @@ def main():
     rows = []
 
     for model, seed in pairs:
+        print(f"Processing {model} seed {seed}...")
+
         source_path = source_map[(model, seed)]
         target_path = target_map[(model, seed)]
 
@@ -382,9 +395,11 @@ def main():
 
         target_subsets = make_target_subsets(target_df)
 
-        for metric, cfg in METRIC_CONFIG.items():
+        for metric in METRIC_ORDER:
+            cfg = METRIC_CONFIG[metric]
             tau = cfg["tau"]
             epsilon = cfg["epsilon"]
+            metric_group = cfg["metric_group"]
 
             theta_s = metric_value(
                 source_df["y_true"].to_numpy(),
@@ -422,6 +437,7 @@ def main():
                         "model": model,
                         "seed": seed,
                         "metric": metric,
+                        "metric_group": metric_group,
                         "target_condition": target_condition,
                         "n_source": len(source_df),
                         "n_target": len(target_part),
@@ -452,8 +468,20 @@ def main():
         ordered=True,
     )
 
+    by_seed["metric"] = pd.Categorical(
+        by_seed["metric"],
+        categories=METRIC_ORDER,
+        ordered=True,
+    )
+
+    by_seed["target_condition"] = pd.Categorical(
+        by_seed["target_condition"],
+        categories=TARGET_ORDER,
+        ordered=True,
+    )
+
     by_seed = by_seed.sort_values(
-        ["metric", "target_condition", "model", "seed"]
+        ["metric_group", "metric", "target_condition", "model", "seed"]
     ).reset_index(drop=True)
 
     by_seed_path = TABLES / "interval_tac_etc_by_seed.csv"
@@ -462,10 +490,9 @@ def main():
     print(f"\nSaved: {by_seed_path}")
     print("Shape:", by_seed.shape)
 
-    # Summary across seeds: performance and decision consistency.
     summary = (
         by_seed
-        .groupby(["model", "metric", "target_condition"], observed=False)
+        .groupby(["metric_group", "model", "metric", "target_condition"], observed=False)
         .agg(
             n_seeds=("seed", "nunique"),
             n_target=("n_target", "first"),
@@ -494,10 +521,13 @@ def main():
 
     consistency = (
         by_seed
-        .groupby(["metric", "target_condition", "joint_region"], observed=False)
+        .groupby(["metric_group", "metric", "target_condition", "joint_region"], observed=False)
         .size()
         .reset_index(name="n_model_seed_decisions")
-        .sort_values(["metric", "target_condition", "n_model_seed_decisions"], ascending=[True, True, False])
+        .sort_values(
+            ["metric_group", "metric", "target_condition", "n_model_seed_decisions"],
+            ascending=[True, True, True, False],
+        )
     )
 
     consistency_path = TABLES / "interval_tac_etc_consistency.csv"
@@ -506,13 +536,9 @@ def main():
     print(f"Saved: {consistency_path}")
     print("Shape:", consistency.shape)
 
-    print("\nPreview: interval_tac_etc_summary.csv")
-    print(summary.head(30).to_string(index=False))
-
     print("\nPreview: interval_tac_etc_consistency.csv")
-    print(consistency.head(40).to_string(index=False))
+    print(consistency.head(80).to_string(index=False))
 
 
 if __name__ == "__main__":
     main()
-

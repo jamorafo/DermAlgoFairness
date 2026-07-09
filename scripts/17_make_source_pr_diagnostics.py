@@ -36,13 +36,28 @@ PUB.mkdir(parents=True, exist_ok=True)
 
 INPUT = TABLES / "interval_tac_etc_by_seed.csv"
 
-METRIC_ORDER = ["recall", "auc_pr", "f1", "precision"]
+PRIMARY_METRICS = ["recall", "auc_pr", "f1", "precision"]
+SECONDARY_METRICS = ["accuracy", "specificity", "auc_roc"]
+METRIC_ORDER = PRIMARY_METRICS + SECONDARY_METRICS
 
 METRIC_LABELS = {
     "recall": "Recall / sensitivity",
     "auc_pr": "AUC-PR",
     "f1": "F1-score",
     "precision": "Precision",
+    "accuracy": "Accuracy",
+    "specificity": "Specificity",
+    "auc_roc": "AUC-ROC",
+}
+
+METRIC_GROUPS = {
+    "recall": "Primary",
+    "auc_pr": "Primary",
+    "f1": "Primary",
+    "precision": "Primary",
+    "accuracy": "Secondary",
+    "specificity": "Secondary",
+    "auc_roc": "Secondary",
 }
 
 # Precision tolerance for source-side PR.
@@ -53,6 +68,9 @@ SOURCE_HALF_WIDTH_TOLERANCE = {
     "auc_pr": 0.075,
     "f1": 0.075,
     "precision": 0.075,
+    "accuracy": 0.075,
+    "specificity": 0.075,
+    "auc_roc": 0.075,
 }
 
 
@@ -88,7 +106,7 @@ def build_latex_table(summary):
 
     lines = []
 
-    lines.append(r"\begin{table}[htbp]")
+    lines.append(r"\begin{table}[h!]")
     lines.append(r"\centering")
     lines.append(r"\small")
     lines.append(

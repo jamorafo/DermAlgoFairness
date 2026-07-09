@@ -110,7 +110,7 @@ def make_table_01():
     )
 
     lines = []
-    lines.append(r"\begin{table}[htbp]")
+    lines.append(r"\begin{table}[h!]")
     lines.append(r"\centering")
     lines.append(r"\scriptsize")
     lines.append(
@@ -229,7 +229,7 @@ def make_table_02():
     )
 
     lines = []
-    lines.append(r"\begin{table}[htbp]")
+    lines.append(r"\begin{table}[h!]")
     lines.append(r"\centering")
     lines.append(r"\scriptsize")
     lines.append(
@@ -369,7 +369,7 @@ def make_table_03():
         return f"{x:.3f}"
 
     lines = []
-    lines.append(r"\begin{table}[htbp]")
+    lines.append(r"\begin{table}[h!]")
     lines.append(r"\centering")
     lines.append(r"\scriptsize")
     lines.append(

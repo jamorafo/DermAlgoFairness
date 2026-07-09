@@ -1,4 +1,4 @@
-\begin{table}[htbp]
+\begin{table}[h!]
 \centering
 \scriptsize
 \caption{Target-side Predictive Representativity diagnostics for the BOSQUE external ORP.}
@@ -9,21 +9,33 @@
 \toprule
 \textbf{Metric} & \textbf{Target} & \textbf{$n$ decisions} & \textbf{$n_T$} & \textbf{Mean target} & \textbf{SD seeds} & \textbf{Mean SE} & \textbf{Max half-width} & \textbf{PR interpretation} \\
 \midrule
-Recall / sensitivity & Overall & 25 & 151 & 0.583 & 0.068 & 0.049 & 0.102 & Partially PR-adequate; uncertainty material \\
- & Light phototype & 25 & 105 & 0.601 & 0.075 & 0.055 & 0.113 & Evidentially limited by finite-ORP uncertainty \\
- & Dark phototype & 25 & 46 & 0.520 & 0.079 & 0.109 & 0.221 & Evidentially limited by finite-ORP uncertainty \\
+Recall / sensitivity & Overall & 25 & 151 & 0.583 & 0.068 & 0.049 & 0.102 & Mostly PR-adequate; some estimates imprecise \\
+ & Light phototype & 25 & 105 & 0.601 & 0.075 & 0.055 & 0.114 & Evidentially limited by finite-ORP uncertainty \\
+ & Dark phototype & 25 & 46 & 0.520 & 0.079 & 0.109 & 0.220 & Evidentially limited by finite-ORP uncertainty \\
 \addlinespace
-AUC-PR & Overall & 25 & 151 & 0.891 & 0.024 & 0.027 & 0.068 & PR-adequate for BOSQUE-condition estimation \\
- & Light phototype & 25 & 105 & 0.936 & 0.015 & 0.024 & 0.071 & PR-adequate for BOSQUE-condition estimation \\
- & Dark phototype & 25 & 46 & 0.761 & 0.046 & 0.082 & 0.188 & Evidentially limited by finite-ORP uncertainty \\
+AUC-PR & Overall & 25 & 151 & 0.891 & 0.024 & 0.028 & 0.069 & PR-adequate for BOSQUE-condition estimation \\
+ & Light phototype & 25 & 105 & 0.936 & 0.015 & 0.024 & 0.072 & PR-adequate for BOSQUE-condition estimation \\
+ & Dark phototype & 25 & 46 & 0.761 & 0.046 & 0.082 & 0.193 & Evidentially limited by finite-ORP uncertainty \\
 \addlinespace
-F1-score & Overall & 25 & 151 & 0.701 & 0.053 & 0.041 & 0.095 & PR-adequate for BOSQUE-condition estimation \\
- & Light phototype & 25 & 105 & 0.729 & 0.056 & 0.044 & 0.105 & Mostly PR-adequate; some estimates imprecise \\
- & Dark phototype & 25 & 46 & 0.601 & 0.061 & 0.098 & 0.229 & Evidentially limited by finite-ORP uncertainty \\
+F1-score & Overall & 25 & 151 & 0.701 & 0.053 & 0.041 & 0.093 & PR-adequate for BOSQUE-condition estimation \\
+ & Light phototype & 25 & 105 & 0.729 & 0.056 & 0.044 & 0.100 & PR-adequate for BOSQUE-condition estimation \\
+ & Dark phototype & 25 & 46 & 0.601 & 0.061 & 0.098 & 0.218 & Evidentially limited by finite-ORP uncertainty \\
 \addlinespace
 Precision & Overall & 25 & 151 & 0.884 & 0.045 & 0.039 & 0.097 & PR-adequate for BOSQUE-condition estimation \\
- & Light phototype & 25 & 105 & 0.935 & 0.022 & 0.034 & 0.093 & PR-adequate for BOSQUE-condition estimation \\
- & Dark phototype & 25 & 46 & 0.738 & 0.111 & 0.108 & 0.286 & Evidentially limited by finite-ORP uncertainty \\
+ & Light phototype & 25 & 105 & 0.935 & 0.022 & 0.034 & 0.094 & PR-adequate for BOSQUE-condition estimation \\
+ & Dark phototype & 25 & 46 & 0.738 & 0.111 & 0.109 & 0.286 & Evidentially limited by finite-ORP uncertainty \\
+\addlinespace
+Accuracy & Overall & 25 & 151 & 0.679 & 0.047 & 0.037 & 0.076 & PR-adequate for BOSQUE-condition estimation \\
+ & Light phototype & 25 & 105 & 0.676 & 0.054 & 0.045 & 0.095 & PR-adequate for BOSQUE-condition estimation \\
+ & Dark phototype & 25 & 46 & 0.686 & 0.057 & 0.067 & 0.152 & Evidentially limited by finite-ORP uncertainty \\
+\addlinespace
+Specificity & Overall & 25 & 151 & 0.857 & 0.064 & 0.046 & 0.124 & Partially PR-adequate; uncertainty material \\
+ & Light phototype & 25 & 105 & 0.884 & 0.039 & 0.059 & 0.147 & Evidentially limited by finite-ORP uncertainty \\
+ & Dark phototype & 25 & 46 & 0.826 & 0.117 & 0.069 & 0.199 & Evidentially limited by finite-ORP uncertainty \\
+\addlinespace
+AUC-ROC & Overall & 25 & 151 & 0.816 & 0.040 & 0.035 & 0.080 & PR-adequate for BOSQUE-condition estimation \\
+ & Light phototype & 25 & 105 & 0.851 & 0.037 & 0.042 & 0.097 & PR-adequate for BOSQUE-condition estimation \\
+ & Dark phototype & 25 & 46 & 0.753 & 0.055 & 0.073 & 0.170 & Evidentially limited by finite-ORP uncertainty \\
 \addlinespace
 \bottomrule
 \end{tabular}

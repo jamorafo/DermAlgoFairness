@@ -1,0 +1,194 @@
+#!/usr/bin/env Rscript
+
+suppressPackageStartupMessages({
+  library(ggplot2)
+  library(readr)
+  library(dplyr)
+  library(forcats)
+  library(scales)
+})
+
+root <- getwd()
+
+input_candidates <- c(
+  file.path(root, "outputs/publication_tables/table_03_fdr_significant_light_dark_gaps.csv"),
+  file.path(root, "outputs/tables/fdr_significant_light_dark_gaps.csv"),
+  file.path(root, "outputs/tables/bosque_significant_gap_forest.csv")
+)
+
+input_path <- input_candidates[file.exists(input_candidates)][1]
+
+if (is.na(input_path)) {
+  stop(
+    "Could not find the FDR-significant gap table. Checked:\n",
+    paste(input_candidates, collapse = "\n")
+  )
+}
+
+message("Using input: ", input_path)
+
+fig_dir <- file.path(root, "outputs/figures")
+dir.create(fig_dir, recursive = TRUE, showWarnings = FALSE)
+
+df <- read_csv(input_path, show_col_types = FALSE)
+
+pick_col <- function(data, candidates) {
+  nm <- names(data)
+  nm_lower <- tolower(nm)
+
+  for (cand in candidates) {
+    idx <- which(nm_lower == tolower(cand))
+    if (length(idx) > 0) return(nm[idx[1]])
+  }
+
+  stop(
+    "Could not find any of these columns: ",
+    paste(candidates, collapse = ", "),
+    "\nAvailable columns: ",
+    paste(nm, collapse = ", ")
+  )
+}
+
+model_col <- pick_col(df, c("model", "Model", "architecture"))
+metric_col <- pick_col(df, c("metric", "Metric"))
+
+gap_col <- pick_col(
+  df,
+  c("gap_light_minus_dark", "gap", "light_dark_gap", "mean_gap", "gap_mean",
+    "estimate", "difference", "mean_difference")
+)
+
+low_col <- pick_col(
+  df,
+  c("ci_low", "lower_ci", "ci_lower", "bootstrap_ci_low",
+    "gap_ci_low", "lower")
+)
+
+high_col <- pick_col(
+  df,
+  c("ci_high", "upper_ci", "ci_upper", "bootstrap_ci_high",
+    "gap_ci_high", "upper")
+)
+
+primary_metrics <- c("Recall", "AUC-PR", "F1", "Precision")
+secondary_metrics <- c("Accuracy", "Specificity", "AUC-ROC")
+metric_order <- c(primary_metrics, secondary_metrics)
+
+model_order <- c(
+  "ResNet50",
+  "DenseNet121",
+  "MobileNetV2",
+  "EfficientNetV2B0",
+  "VGG16"
+)
+
+normalize_metric <- function(x) {
+  z <- tolower(trimws(as.character(x)))
+  z <- gsub(" ", "_", z)
+
+  dplyr::case_when(
+    z %in% c("recall", "sensitivity") ~ "Recall",
+    z %in% c("auc_pr", "auc-pr", "auprc") ~ "AUC-PR",
+    z %in% c("f1", "f1_score", "f1-score") ~ "F1",
+    z %in% c("precision") ~ "Precision",
+    z %in% c("accuracy") ~ "Accuracy",
+    z %in% c("specificity") ~ "Specificity",
+    z %in% c("auc_roc", "auc-roc", "auroc") ~ "AUC-ROC",
+    TRUE ~ as.character(x)
+  )
+}
+
+normalize_model <- function(x) {
+  z <- tolower(trimws(as.character(x)))
+  z <- gsub("[-_ ]", "", z)
+
+  dplyr::case_when(
+    z == "resnet50" ~ "ResNet50",
+    z == "densenet121" ~ "DenseNet121",
+    z == "mobilenetv2" ~ "MobileNetV2",
+    z == "efficientnetv2b0" ~ "EfficientNetV2B0",
+    z == "vgg16" ~ "VGG16",
+    TRUE ~ as.character(x)
+  )
+}
+
+plot_df <- df %>%
+  transmute(
+    model = normalize_model(.data[[model_col]]),
+    metric = normalize_metric(.data[[metric_col]]),
+    gap = as.numeric(.data[[gap_col]]),
+    ci_low = as.numeric(.data[[low_col]]),
+    ci_high = as.numeric(.data[[high_col]])
+  ) %>%
+  mutate(
+    metric_group = if_else(
+      metric %in% primary_metrics,
+      "Primary metrics",
+      "Secondary descriptive metrics"
+    ),
+    metric_group = factor(
+      metric_group,
+      levels = c("Primary metrics", "Secondary descriptive metrics")
+    ),
+    metric = factor(metric, levels = metric_order),
+    model = factor(model, levels = model_order),
+    label = paste0(model, " — ", metric)
+  ) %>%
+  arrange(metric_group, metric, desc(gap), model) %>%
+  mutate(label = factor(label, levels = rev(unique(label))))
+
+if (nrow(plot_df) == 0) {
+  stop("No rows available for plotting.")
+}
+
+plot_height <- max(6.5, 0.32 * nrow(plot_df) + 1.8)
+
+p <- ggplot(plot_df, aes(x = gap, y = label)) +
+  geom_vline(xintercept = 0, linetype = "dashed", size = 0.35) +
+  geom_errorbarh(
+    aes(xmin = ci_low, xmax = ci_high),
+    height = 0.18,
+    size = 0.45
+  ) +
+  geom_point(size = 2.2) +
+  facet_grid(
+    metric_group ~ .,
+    scales = "free_y",
+    space = "free_y",
+    switch = "y"
+  ) +
+  scale_x_continuous(labels = label_number(accuracy = 0.01)) +
+  labs(
+    title = "FDR-significant BOSQUE subgroup performance gaps",
+    subtitle = "Bootstrap 95% confidence intervals; positive values indicate higher light-phototype performance",
+    x = "Light − dark performance gap",
+    y = NULL
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", size = 13),
+    plot.subtitle = element_text(size = 10),
+    axis.text.y = element_text(size = 9),
+    axis.title.x = element_text(face = "bold"),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor = element_blank(),
+    strip.placement = "outside",
+    strip.text.y.left = element_text(face = "bold", angle = 0),
+    plot.margin = margin(8, 12, 8, 8)
+  )
+
+pdf_path <- file.path(fig_dir, "figure_bosque_significant_gap_forest_sorted_ggplot.pdf")
+png_path <- file.path(fig_dir, "figure_bosque_significant_gap_forest_sorted_ggplot.png")
+
+ggsave(pdf_path, p, width = 9.5, height = plot_height)
+ggsave(png_path, p, width = 9.5, height = plot_height, dpi = 300)
+
+message("Saved: ", pdf_path)
+message("Saved: ", png_path)
+
+print(
+  plot_df %>%
+    arrange(metric_group, metric, desc(gap), model) %>%
+    select(metric_group, model, metric, gap, ci_low, ci_high),
+  n = Inf
+)

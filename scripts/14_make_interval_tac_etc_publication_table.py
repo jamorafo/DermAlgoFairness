@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Create publication-ready interval TAC/ETC consistency tables.
+Create publication-ready interval TAC/ETC consistency table.
 
 Input:
   outputs/tables/interval_tac_etc_consistency.csv
@@ -11,7 +11,7 @@ Outputs:
   outputs/publication_tables/table_04_interval_tac_etc_consistency.csv
   outputs/publication_tables/table_04_interval_tac_etc_consistency.tex
 
-This version avoids pandas.to_latex() so it does not require jinja2.
+This table reports primary and secondary metrics separately.
 """
 
 from pathlib import Path
@@ -21,18 +21,23 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 TABLES = ROOT / "outputs" / "tables"
 PUB = ROOT / "outputs" / "publication_tables"
-
 PUB.mkdir(parents=True, exist_ok=True)
 
 INPUT = TABLES / "interval_tac_etc_consistency.csv"
 
-METRIC_ORDER = ["recall", "auc_pr", "f1", "precision"]
+PRIMARY_METRICS = ["recall", "auc_pr", "f1", "precision"]
+SECONDARY_METRICS = ["accuracy", "specificity", "auc_roc"]
+METRIC_ORDER = PRIMARY_METRICS + SECONDARY_METRICS
+
 TARGET_ORDER = ["BOSQUE overall", "BOSQUE light", "BOSQUE dark"]
 
 REGION_ORDER = [
     "adequate and transported",
     "inconclusive",
     "not adequate and not transported",
+    "transported but inadequate",
+    "adequate but not transported",
+    "evidentially unresolved",
 ]
 
 METRIC_LABELS = {
@@ -40,6 +45,19 @@ METRIC_LABELS = {
     "auc_pr": "AUC-PR",
     "f1": "F1-score",
     "precision": "Precision",
+    "accuracy": "Accuracy",
+    "specificity": "Specificity",
+    "auc_roc": "AUC-ROC",
+}
+
+METRIC_GROUPS = {
+    "recall": "Primary",
+    "auc_pr": "Primary",
+    "f1": "Primary",
+    "precision": "Primary",
+    "accuracy": "Secondary",
+    "specificity": "Secondary",
+    "auc_roc": "Secondary",
 }
 
 TARGET_LABELS = {
@@ -50,7 +68,8 @@ TARGET_LABELS = {
 
 
 def latex_escape(value):
-    """Minimal LaTeX escaping for table text."""
+    if pd.isna(value):
+        return ""
     return (
         str(value)
         .replace("\\", r"\textbackslash{}")
@@ -67,7 +86,36 @@ def latex_escape(value):
 
 
 def build_publication_table(df):
-    """Convert long consistency table into publication-wide format."""
+    df = df.copy()
+
+    required = {
+        "metric",
+        "target_condition",
+        "joint_region",
+        "n_model_seed_decisions",
+    }
+
+    missing = required - set(df.columns)
+    if missing:
+        raise ValueError(f"Input table is missing required columns: {missing}")
+
+    df["metric"] = df["metric"].astype(str)
+    df["target_condition"] = df["target_condition"].astype(str)
+    df["joint_region"] = df["joint_region"].astype(str)
+    df["n_model_seed_decisions"] = pd.to_numeric(
+        df["n_model_seed_decisions"],
+        errors="coerce",
+    ).fillna(0)
+
+    # Important: aggregate first. This prevents non-unique multi-index errors
+    # if the consistency table contains repeated rows from previous versions.
+    df_agg = (
+        df.groupby(
+            ["metric", "target_condition", "joint_region"],
+            as_index=False,
+        )["n_model_seed_decisions"]
+        .sum()
+    )
 
     full_index = pd.MultiIndex.from_product(
         [METRIC_ORDER, TARGET_ORDER, REGION_ORDER],
@@ -75,7 +123,7 @@ def build_publication_table(df):
     )
 
     df_full = (
-        df.set_index(["metric", "target_condition", "joint_region"])
+        df_agg.set_index(["metric", "target_condition", "joint_region"])
         .reindex(full_index, fill_value=0)
         .reset_index()
     )
@@ -95,87 +143,115 @@ def build_publication_table(df):
         if col not in wide.columns:
             wide[col] = 0
 
+    wide["metric_group"] = wide["metric"].map(METRIC_GROUPS)
+
+    wide["metric_group"] = pd.Categorical(
+        wide["metric_group"],
+        categories=["Primary", "Secondary"],
+        ordered=True,
+    )
+
     wide["metric"] = pd.Categorical(
         wide["metric"],
         categories=METRIC_ORDER,
         ordered=True,
     )
+
     wide["target_condition"] = pd.Categorical(
         wide["target_condition"],
         categories=TARGET_ORDER,
         ordered=True,
     )
 
-    wide = wide.sort_values(["metric", "target_condition"]).reset_index(drop=True)
+    wide = wide.sort_values(
+        ["metric_group", "metric", "target_condition"]
+    ).reset_index(drop=True)
 
     out = pd.DataFrame(
         {
-            "Metric": wide["metric"].map(METRIC_LABELS),
-            "Target condition": wide["target_condition"].map(TARGET_LABELS),
+            "Metric group": wide["metric_group"].astype(str),
+            "Metric": wide["metric"].astype(str).map(METRIC_LABELS),
+            "Target condition": wide["target_condition"].astype(str).map(TARGET_LABELS),
             "Adequate and transported": wide["adequate and transported"].astype(int),
             "Inconclusive": wide["inconclusive"].astype(int),
             "Not adequate and not transported": wide[
                 "not adequate and not transported"
             ].astype(int),
+            "Transported but inadequate": wide["transported but inadequate"].astype(int),
+            "Adequate but not transported": wide["adequate but not transported"].astype(int),
+            "Evidentially unresolved": wide["evidentially unresolved"].astype(int),
         }
     )
 
-    out["Total model--seed decisions"] = (
-        out["Adequate and transported"]
-        + out["Inconclusive"]
-        + out["Not adequate and not transported"]
-    )
+    decision_cols = [
+        "Adequate and transported",
+        "Inconclusive",
+        "Not adequate and not transported",
+        "Transported but inadequate",
+        "Adequate but not transported",
+        "Evidentially unresolved",
+    ]
+
+    out["Total model--seed decisions"] = out[decision_cols].sum(axis=1)
 
     return out
 
 
 def build_latex_table(out):
-    """Build a LaTeX table manually, without pandas.to_latex()."""
-
     lines = []
 
-    lines.append(r"\begin{table}[htbp]")
+    lines.append(r"\begin{table}[h!]")
     lines.append(r"\centering")
-    lines.append(r"\small")
+    lines.append(r"\scriptsize")
     lines.append(
         r"\caption{Interval-based TAC/ETC decision consistency across model--seed replicas.}"
     )
     lines.append(r"\label{tab:interval-tac-etc-consistency}")
-    lines.append(r"\setlength{\tabcolsep}{4pt}")
+    lines.append(r"\setlength{\tabcolsep}{3pt}")
     lines.append(r"\renewcommand{\arraystretch}{1.08}")
-    lines.append(r"\begin{tabular}{llrrrr}")
+    lines.append(r"\begin{tabular}{lllrrrrrrr}")
     lines.append(r"\toprule")
     lines.append(
+        r"\textbf{Group} & "
         r"\textbf{Metric} & "
-        r"\textbf{Target condition} & "
+        r"\textbf{Target} & "
         r"\textbf{Adeq. + transp.} & "
         r"\textbf{Inconc.} & "
         r"\textbf{Not adeq. + not transp.} & "
+        r"\textbf{Transp. but inad.} & "
+        r"\textbf{Adeq. but not transp.} & "
+        r"\textbf{Unresolved} & "
         r"\textbf{Total} \\"
     )
     lines.append(r"\midrule")
 
+    previous_group = None
     previous_metric = None
 
     for _, row in out.iterrows():
+        group = latex_escape(row["Metric group"])
         metric = latex_escape(row["Metric"])
-        target = latex_escape(row["Target condition"])
 
-        # Print metric only once per block for a cleaner table.
+        group_cell = group if group != previous_group else ""
         metric_cell = metric if metric != previous_metric else ""
 
         lines.append(
+            f"{group_cell} & "
             f"{metric_cell} & "
-            f"{target} & "
+            f"{latex_escape(row['Target condition'])} & "
             f"{int(row['Adequate and transported'])} & "
             f"{int(row['Inconclusive'])} & "
             f"{int(row['Not adequate and not transported'])} & "
+            f"{int(row['Transported but inadequate'])} & "
+            f"{int(row['Adequate but not transported'])} & "
+            f"{int(row['Evidentially unresolved'])} & "
             f"{int(row['Total model--seed decisions'])} \\\\"
         )
 
+        previous_group = group
         previous_metric = metric
 
-        if target == "Dark phototype":
+        if row["Target condition"] == "Dark phototype":
             lines.append(r"\addlinespace")
 
     lines.append(r"\bottomrule")
@@ -183,17 +259,12 @@ def build_latex_table(out):
     lines.append(r"\begin{flushleft}")
     lines.append(r"\footnotesize")
     lines.append(
-        r"Notes: Each row summarizes 25 model--seed decisions, corresponding to "
-        r"five architectures trained under five random seeds. TAC denotes the "
-        r"Target Adequacy Criterion and ETC denotes the External Transportability "
-        r"Criterion. Decisions are interval-based. ``Adeq. + transp.'' indicates "
-        r"that the lower confidence bound for target performance exceeded the "
-        r"adequacy threshold and the upper confidence bound for source-to-target "
-        r"degradation did not exceed the admissible degradation margin. "
-        r"``Not adeq. + not transp.'' indicates that the upper confidence bound "
-        r"for target performance remained below the adequacy threshold and the "
-        r"lower confidence bound for degradation exceeded the admissible margin. "
-        r"All other cases are classified as inconclusive."
+        r"Notes: Each row summarizes model--seed decisions across five "
+        r"architectures and five random seeds. Primary metrics are used for the "
+        r"main PR/TAC/ETC interpretation. Secondary metrics are reported "
+        r"descriptively. TAC denotes the Target Adequacy Criterion and ETC "
+        r"denotes the External Transportability Criterion. Decisions are "
+        r"interval-based."
     )
     lines.append(r"\end{flushleft}")
     lines.append(r"\end{table}")
@@ -206,27 +277,13 @@ def main():
         raise FileNotFoundError(f"Missing input table: {INPUT}")
 
     df = pd.read_csv(INPUT)
-
-    required = {
-        "metric",
-        "target_condition",
-        "joint_region",
-        "n_model_seed_decisions",
-    }
-
-    missing = required - set(df.columns)
-    if missing:
-        raise ValueError(f"Input table is missing required columns: {missing}")
-
     out = build_publication_table(df)
 
     csv_path = PUB / "table_04_interval_tac_etc_consistency.csv"
     tex_path = PUB / "table_04_interval_tac_etc_consistency.tex"
 
     out.to_csv(csv_path, index=False)
-
-    latex = build_latex_table(out)
-    tex_path.write_text(latex, encoding="utf-8")
+    tex_path.write_text(build_latex_table(out), encoding="utf-8")
 
     print(f"Saved: {csv_path}")
     print(f"Saved: {tex_path}")
