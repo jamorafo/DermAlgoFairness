@@ -1,127 +1,43 @@
 metric_group,metric,target_condition,joint_region,n_model_seed_decisions
 Primary,recall,BOSQUE overall,inconclusive,16
 Primary,recall,BOSQUE overall,not adequate and not transported,9
-Primary,recall,BOSQUE overall,adequate and transported,0
 Primary,recall,BOSQUE light,inconclusive,18
 Primary,recall,BOSQUE light,not adequate and not transported,7
-Primary,recall,BOSQUE light,adequate and transported,0
 Primary,recall,BOSQUE dark,inconclusive,18
 Primary,recall,BOSQUE dark,not adequate and not transported,7
-Primary,recall,BOSQUE dark,adequate and transported,0
 Primary,auc_pr,BOSQUE overall,inconclusive,16
 Primary,auc_pr,BOSQUE overall,adequate and transported,9
-Primary,auc_pr,BOSQUE overall,not adequate and not transported,0
 Primary,auc_pr,BOSQUE light,adequate and transported,22
 Primary,auc_pr,BOSQUE light,inconclusive,3
-Primary,auc_pr,BOSQUE light,not adequate and not transported,0
 Primary,auc_pr,BOSQUE dark,inconclusive,25
-Primary,auc_pr,BOSQUE dark,adequate and transported,0
-Primary,auc_pr,BOSQUE dark,not adequate and not transported,0
 Primary,f1,BOSQUE overall,inconclusive,23
 Primary,f1,BOSQUE overall,adequate and transported,2
-Primary,f1,BOSQUE overall,not adequate and not transported,0
 Primary,f1,BOSQUE light,inconclusive,20
 Primary,f1,BOSQUE light,adequate and transported,5
-Primary,f1,BOSQUE light,not adequate and not transported,0
 Primary,f1,BOSQUE dark,inconclusive,24
 Primary,f1,BOSQUE dark,not adequate and not transported,1
-Primary,f1,BOSQUE dark,adequate and transported,0
 Primary,precision,BOSQUE overall,adequate and transported,15
 Primary,precision,BOSQUE overall,inconclusive,10
-Primary,precision,BOSQUE overall,not adequate and not transported,0
 Primary,precision,BOSQUE light,adequate and transported,24
 Primary,precision,BOSQUE light,inconclusive,1
-Primary,precision,BOSQUE light,not adequate and not transported,0
 Primary,precision,BOSQUE dark,inconclusive,24
 Primary,precision,BOSQUE dark,adequate and transported,1
-Primary,precision,BOSQUE dark,not adequate and not transported,0
-Primary,accuracy,BOSQUE overall,adequate and transported,0
-Primary,accuracy,BOSQUE overall,inconclusive,0
-Primary,accuracy,BOSQUE overall,not adequate and not transported,0
-Primary,accuracy,BOSQUE light,adequate and transported,0
-Primary,accuracy,BOSQUE light,inconclusive,0
-Primary,accuracy,BOSQUE light,not adequate and not transported,0
-Primary,accuracy,BOSQUE dark,adequate and transported,0
-Primary,accuracy,BOSQUE dark,inconclusive,0
-Primary,accuracy,BOSQUE dark,not adequate and not transported,0
-Primary,specificity,BOSQUE overall,adequate and transported,0
-Primary,specificity,BOSQUE overall,inconclusive,0
-Primary,specificity,BOSQUE overall,not adequate and not transported,0
-Primary,specificity,BOSQUE light,adequate and transported,0
-Primary,specificity,BOSQUE light,inconclusive,0
-Primary,specificity,BOSQUE light,not adequate and not transported,0
-Primary,specificity,BOSQUE dark,adequate and transported,0
-Primary,specificity,BOSQUE dark,inconclusive,0
-Primary,specificity,BOSQUE dark,not adequate and not transported,0
-Primary,auc_roc,BOSQUE overall,adequate and transported,0
-Primary,auc_roc,BOSQUE overall,inconclusive,0
-Primary,auc_roc,BOSQUE overall,not adequate and not transported,0
-Primary,auc_roc,BOSQUE light,adequate and transported,0
-Primary,auc_roc,BOSQUE light,inconclusive,0
-Primary,auc_roc,BOSQUE light,not adequate and not transported,0
-Primary,auc_roc,BOSQUE dark,adequate and transported,0
-Primary,auc_roc,BOSQUE dark,inconclusive,0
-Primary,auc_roc,BOSQUE dark,not adequate and not transported,0
-Secondary,recall,BOSQUE overall,adequate and transported,0
-Secondary,recall,BOSQUE overall,inconclusive,0
-Secondary,recall,BOSQUE overall,not adequate and not transported,0
-Secondary,recall,BOSQUE light,adequate and transported,0
-Secondary,recall,BOSQUE light,inconclusive,0
-Secondary,recall,BOSQUE light,not adequate and not transported,0
-Secondary,recall,BOSQUE dark,adequate and transported,0
-Secondary,recall,BOSQUE dark,inconclusive,0
-Secondary,recall,BOSQUE dark,not adequate and not transported,0
-Secondary,auc_pr,BOSQUE overall,adequate and transported,0
-Secondary,auc_pr,BOSQUE overall,inconclusive,0
-Secondary,auc_pr,BOSQUE overall,not adequate and not transported,0
-Secondary,auc_pr,BOSQUE light,adequate and transported,0
-Secondary,auc_pr,BOSQUE light,inconclusive,0
-Secondary,auc_pr,BOSQUE light,not adequate and not transported,0
-Secondary,auc_pr,BOSQUE dark,adequate and transported,0
-Secondary,auc_pr,BOSQUE dark,inconclusive,0
-Secondary,auc_pr,BOSQUE dark,not adequate and not transported,0
-Secondary,f1,BOSQUE overall,adequate and transported,0
-Secondary,f1,BOSQUE overall,inconclusive,0
-Secondary,f1,BOSQUE overall,not adequate and not transported,0
-Secondary,f1,BOSQUE light,adequate and transported,0
-Secondary,f1,BOSQUE light,inconclusive,0
-Secondary,f1,BOSQUE light,not adequate and not transported,0
-Secondary,f1,BOSQUE dark,adequate and transported,0
-Secondary,f1,BOSQUE dark,inconclusive,0
-Secondary,f1,BOSQUE dark,not adequate and not transported,0
-Secondary,precision,BOSQUE overall,adequate and transported,0
-Secondary,precision,BOSQUE overall,inconclusive,0
-Secondary,precision,BOSQUE overall,not adequate and not transported,0
-Secondary,precision,BOSQUE light,adequate and transported,0
-Secondary,precision,BOSQUE light,inconclusive,0
-Secondary,precision,BOSQUE light,not adequate and not transported,0
-Secondary,precision,BOSQUE dark,adequate and transported,0
-Secondary,precision,BOSQUE dark,inconclusive,0
-Secondary,precision,BOSQUE dark,not adequate and not transported,0
 Secondary,accuracy,BOSQUE overall,not adequate and not transported,20
 Secondary,accuracy,BOSQUE overall,inconclusive,5
-Secondary,accuracy,BOSQUE overall,adequate and transported,0
 Secondary,accuracy,BOSQUE light,not adequate and not transported,19
 Secondary,accuracy,BOSQUE light,inconclusive,6
-Secondary,accuracy,BOSQUE light,adequate and transported,0
 Secondary,accuracy,BOSQUE dark,inconclusive,19
 Secondary,accuracy,BOSQUE dark,not adequate and not transported,6
-Secondary,accuracy,BOSQUE dark,adequate and transported,0
 Secondary,specificity,BOSQUE overall,inconclusive,24
 Secondary,specificity,BOSQUE overall,adequate and transported,1
-Secondary,specificity,BOSQUE overall,not adequate and not transported,0
 Secondary,specificity,BOSQUE light,inconclusive,24
 Secondary,specificity,BOSQUE light,adequate and transported,1
-Secondary,specificity,BOSQUE light,not adequate and not transported,0
 Secondary,specificity,BOSQUE dark,inconclusive,22
 Secondary,specificity,BOSQUE dark,not adequate and not transported,2
 Secondary,specificity,BOSQUE dark,adequate and transported,1
 Secondary,auc_roc,BOSQUE overall,inconclusive,19
 Secondary,auc_roc,BOSQUE overall,not adequate and not transported,6
-Secondary,auc_roc,BOSQUE overall,adequate and transported,0
 Secondary,auc_roc,BOSQUE light,inconclusive,24
 Secondary,auc_roc,BOSQUE light,not adequate and not transported,1
-Secondary,auc_roc,BOSQUE light,adequate and transported,0
 Secondary,auc_roc,BOSQUE dark,inconclusive,21
 Secondary,auc_roc,BOSQUE dark,not adequate and not transported,4
-Secondary,auc_roc,BOSQUE dark,adequate and transported,0

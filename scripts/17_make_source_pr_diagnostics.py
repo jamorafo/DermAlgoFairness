@@ -2,11 +2,12 @@
 # -*- coding: utf-8 -*-
 
 """
-Source-side Predictive Representativity diagnostics.
+Finite-ORP precision diagnostics for the HAM10000 held-out source ORP.
 
-This script extracts one unique source-side performance estimate and confidence
-interval per model--seed--metric from the interval TAC/ETC analysis and
-summarizes the source ORP precision across the 25 locked model replicas.
+The script extracts one source estimate and percentile-bootstrap interval per
+locked model--seed system and metric. It evaluates only interval half-width
+against a documentation tolerance; it does not establish full Predictive
+Representativity, clinical adequacy, bias control, or population alignment.
 
 Input:
   outputs/tables/interval_tac_etc_by_seed.csv
@@ -15,15 +16,10 @@ Outputs:
   outputs/tables/source_pr_diagnostics_by_model_seed.csv
   outputs/publication_tables/table_07_source_pr_diagnostics.csv
   outputs/publication_tables/table_07_source_pr_diagnostics.tex
-
-Important:
-  interval_tac_etc_by_seed.csv repeats the same source model--seed--metric
-  information once per target condition: BOSQUE overall, BOSQUE light, and
-  BOSQUE dark. For source-side PR diagnostics, this script keeps only the
-  BOSQUE overall copy so each source model--seed--metric is counted once.
 """
 
 from pathlib import Path
+
 import pandas as pd
 
 
@@ -50,32 +46,12 @@ METRIC_LABELS = {
     "auc_roc": "AUC-ROC",
 }
 
-METRIC_GROUPS = {
-    "recall": "Primary",
-    "auc_pr": "Primary",
-    "f1": "Primary",
-    "precision": "Primary",
-    "accuracy": "Secondary",
-    "specificity": "Secondary",
-    "auc_roc": "Secondary",
-}
-
-# Precision tolerance for source-side PR.
-# This is not a clinical adequacy threshold. It is a documentation threshold
-# for the maximum acceptable CI half-width of the source performance estimate.
 SOURCE_HALF_WIDTH_TOLERANCE = {
-    "recall": 0.075,
-    "auc_pr": 0.075,
-    "f1": 0.075,
-    "precision": 0.075,
-    "accuracy": 0.075,
-    "specificity": 0.075,
-    "auc_roc": 0.075,
+    metric: 0.075 for metric in METRIC_ORDER
 }
 
 
 def latex_escape(value):
-    """Minimal LaTeX escaping for table text."""
     if pd.isna(value):
         return ""
 
@@ -94,40 +70,38 @@ def latex_escape(value):
     )
 
 
-def fmt(x, digits=3):
-    """Format numeric output for LaTeX."""
-    if pd.isna(x):
+def fmt(value, digits=3):
+    if pd.isna(value):
         return ""
-    return f"{float(x):.{digits}f}"
+    return f"{float(value):.{digits}f}"
 
 
 def build_latex_table(summary):
-    """Build publication-ready LaTeX table manually."""
-
-    lines = []
-
-    lines.append(r"\begin{table}[h!]")
-    lines.append(r"\centering")
-    lines.append(r"\small")
-    lines.append(
-        r"\caption{Source-side Predictive Representativity diagnostics for the HAM10000 internal evaluation ORP.}"
-    )
-    lines.append(r"\label{tab:source-pr-diagnostics}")
-    lines.append(r"\setlength{\tabcolsep}{4pt}")
-    lines.append(r"\renewcommand{\arraystretch}{1.08}")
-    lines.append(r"\begin{tabular}{lrrrrrrr}")
-    lines.append(r"\toprule")
-    lines.append(
-        r"\textbf{Metric} & "
-        r"\textbf{$n$ decisions} & "
-        r"\textbf{$n_S$} & "
-        r"\textbf{Mean source} & "
-        r"\textbf{SD seeds} & "
-        r"\textbf{Mean SE} & "
-        r"\textbf{Max half-width} & "
-        r"\textbf{Precision adequate} \\"
-    )
-    lines.append(r"\midrule")
+    lines = [
+        r"\begin{table}[h!]",
+        r"\centering",
+        r"\small",
+        (
+            r"\caption{Finite-ORP precision of HAM10000 held-out "
+            r"source performance estimates.}"
+        ),
+        r"\label{tab:source-pr-diagnostics}",
+        r"\setlength{\tabcolsep}{4pt}",
+        r"\renewcommand{\arraystretch}{1.08}",
+        r"\begin{tabular}{lrrrrrrr}",
+        r"\toprule",
+        (
+            r"\textbf{Metric} & "
+            r"\textbf{$n$ systems} & "
+            r"\textbf{$n_S$} & "
+            r"\textbf{Mean performance} & "
+            r"\textbf{SD systems} & "
+            r"\textbf{Mean half-width} & "
+            r"\textbf{Max half-width} & "
+            r"\textbf{Within tolerance} \\"
+        ),
+        r"\midrule",
+    ]
 
     for _, row in summary.iterrows():
         lines.append(
@@ -135,30 +109,37 @@ def build_latex_table(summary):
             f"{int(row['n_model_seed'])} & "
             f"{int(row['n_source'])} & "
             f"{fmt(row['mean_source'])} & "
-            f"{fmt(row['sd_across_seeds'])} & "
-            f"{fmt(row['mean_se'])} & "
+            f"{fmt(row['sd_across_systems'])} & "
+            f"{fmt(row['mean_half_width'])} & "
             f"{fmt(row['max_half_width'])} & "
-            f"{int(row['n_precision_adequate'])}/{int(row['n_model_seed'])} \\\\"
+            f"{int(row['n_within_tolerance'])}/"
+            f"{int(row['n_model_seed'])} \\\\"
         )
 
-    lines.append(r"\bottomrule")
-    lines.append(r"\end{tabular}")
-    lines.append(r"\begin{flushleft}")
-    lines.append(r"\footnotesize")
-    lines.append(
-        r"Notes: Each row summarizes 25 source-side estimates, corresponding to "
-        r"five architectures trained under five random seeds. Source uncertainty "
-        r"is computed on the non-augmented HAM10000 internal test ORP for each "
-        r"locked model. The approximate standard error is obtained from the "
-        r"bootstrap confidence interval half-width divided by 1.96. The "
-        r"precision-adequacy count uses a documentation tolerance of CI half-width "
-        r"$\leq 0.075$; this tolerance is not a clinical performance threshold "
-        r"and can be modified in the script. Because the interval TAC/ETC table "
-        r"repeats source estimates across target conditions, only the BOSQUE "
-        r"overall rows are retained for this source-side diagnostic."
+    lines.extend(
+        [
+            r"\bottomrule",
+            r"\end{tabular}",
+            r"\begin{flushleft}",
+            r"\footnotesize",
+            (
+                r"Notes: Each row summarizes 25 locked architecture--seed "
+                r"systems evaluated on the non-augmented HAM10000 held-out "
+                r"source ORP ($n_S=1002$). Mean performance and SD describe "
+                r"variation across the 25 locked systems; the SD therefore "
+                r"combines architecture and training-seed variation. Precision "
+                r"is summarized by the half-width of the 95\% image-level "
+                r"percentile-bootstrap interval based on 2000 replicates. "
+                r"``Within tolerance'' denotes a half-width $\leq 0.075$. "
+                r"This documentation tolerance is not a clinical threshold, "
+                r"and satisfying it establishes only finite-ORP precision, "
+                r"not full Predictive Representativity, bias control, interval "
+                r"coverage, or population-level generalizability."
+            ),
+            r"\end{flushleft}",
+            r"\end{table}",
+        ]
     )
-    lines.append(r"\end{flushleft}")
-    lines.append(r"\end{table}")
 
     return "\n".join(lines)
 
@@ -182,18 +163,15 @@ def main():
 
     missing = required - set(df.columns)
     if missing:
-        raise ValueError(f"Missing required columns in {INPUT}: {missing}")
+        raise ValueError(
+            f"Missing required columns in {INPUT}: {sorted(missing)}"
+        )
 
-    # ------------------------------------------------------------------
-    # Important correction:
-    # interval_tac_etc_by_seed.csv contains repeated source estimates:
-    # one copy for BOSQUE overall, one for BOSQUE light, one for BOSQUE dark.
-    # Source-side PR should count each model--seed--metric once only.
-    # ------------------------------------------------------------------
-    df_src = df[df["target_condition"] == "BOSQUE overall"].copy()
-
-    src = (
-        df_src[
+    # Source estimates are repeated once for each BOSQUE target condition.
+    # Keep one copy per locked model--seed system and metric.
+    source = (
+        df.loc[
+            df["target_condition"] == "BOSQUE overall",
             [
                 "model",
                 "seed",
@@ -202,59 +180,96 @@ def main():
                 "source_performance",
                 "source_ci_low",
                 "source_ci_high",
-            ]
+            ],
         ]
-        .drop_duplicates(subset=["model", "seed", "metric"])
+        .drop_duplicates(["model", "seed", "metric"])
         .copy()
     )
 
-    expected_n = 25 * len(METRIC_ORDER)
-    if len(src) != expected_n:
-        print(
-            "WARNING: Expected "
-            f"{expected_n} unique source model--seed--metric rows "
-            f"but found {len(src)}."
-        )
-        print("Counts by metric:")
-        print(src["metric"].value_counts().to_string())
+    if source.duplicated(["model", "seed", "metric"]).any():
+        raise RuntimeError("Duplicate source model--seed--metric rows remain.")
 
-    src["source_half_width"] = (src["source_ci_high"] - src["source_ci_low"]) / 2
-    src["source_se_approx"] = src["source_half_width"] / 1.96
-    src["source_precision_tolerance"] = src["metric"].map(
+    expected_rows = 25 * len(METRIC_ORDER)
+    if len(source) != expected_rows:
+        raise RuntimeError(
+            f"Expected {expected_rows} source rows, found {len(source)}."
+        )
+
+    if set(source["n_source"]) != {1002}:
+        raise RuntimeError(
+            f"Unexpected source sizes: {sorted(source['n_source'].unique())}"
+        )
+
+    source["source_half_width"] = (
+        source["source_ci_high"] - source["source_ci_low"]
+    ) / 2
+
+    source["source_half_width_tolerance"] = source["metric"].map(
         SOURCE_HALF_WIDTH_TOLERANCE
     )
-    src["source_precision_adequate"] = (
-        src["source_half_width"] <= src["source_precision_tolerance"]
+
+    if source["source_half_width_tolerance"].isna().any():
+        unknown = source.loc[
+            source["source_half_width_tolerance"].isna(),
+            "metric",
+        ].unique()
+        raise RuntimeError(f"Missing tolerances for metrics: {unknown}")
+
+    source["source_within_tolerance"] = (
+        source["source_half_width"]
+        <= source["source_half_width_tolerance"]
     )
 
-    src["metric"] = pd.Categorical(
-        src["metric"],
+    source["metric"] = pd.Categorical(
+        source["metric"],
         categories=METRIC_ORDER,
         ordered=True,
     )
 
-    src = src.sort_values(["metric", "model", "seed"]).reset_index(drop=True)
+    source = source.sort_values(
+        ["metric", "model", "seed"]
+    ).reset_index(drop=True)
 
-    by_seed_path = TABLES / "source_pr_diagnostics_by_model_seed.csv"
-    src.to_csv(by_seed_path, index=False)
+    by_system_path = (
+        TABLES / "source_pr_diagnostics_by_model_seed.csv"
+    )
+    source.to_csv(by_system_path, index=False)
 
     summary = (
-        src.groupby("metric", observed=False)
+        source.groupby("metric", observed=True)
         .agg(
             n_model_seed=("source_performance", "size"),
             n_source=("n_source", "first"),
             mean_source=("source_performance", "mean"),
-            sd_across_seeds=("source_performance", "std"),
-            mean_se=("source_se_approx", "mean"),
-            max_se=("source_se_approx", "max"),
+            sd_across_systems=("source_performance", "std"),
             mean_half_width=("source_half_width", "mean"),
             max_half_width=("source_half_width", "max"),
-            n_precision_adequate=("source_precision_adequate", "sum"),
+            half_width_tolerance=(
+                "source_half_width_tolerance",
+                "first",
+            ),
+            n_within_tolerance=(
+                "source_within_tolerance",
+                "sum",
+            ),
         )
         .reset_index()
     )
 
-    summary["Metric"] = summary["metric"].map(METRIC_LABELS)
+    if len(summary) != len(METRIC_ORDER):
+        raise RuntimeError(
+            f"Expected {len(METRIC_ORDER)} summary rows, "
+            f"found {len(summary)}."
+        )
+
+    if not (summary["n_model_seed"] == 25).all():
+        raise RuntimeError(
+            "At least one source metric does not contain 25 systems."
+        )
+
+    summary["Metric"] = (
+        summary["metric"].astype(str).map(METRIC_LABELS)
+    )
 
     summary = summary[
         [
@@ -262,22 +277,28 @@ def main():
             "n_model_seed",
             "n_source",
             "mean_source",
-            "sd_across_seeds",
-            "mean_se",
-            "max_se",
+            "sd_across_systems",
             "mean_half_width",
             "max_half_width",
-            "n_precision_adequate",
+            "half_width_tolerance",
+            "n_within_tolerance",
         ]
     ]
 
-    summary_path = PUB / "table_07_source_pr_diagnostics.csv"
-    tex_path = PUB / "table_07_source_pr_diagnostics.tex"
+    summary_path = (
+        PUB / "table_07_source_pr_diagnostics.csv"
+    )
+    tex_path = (
+        PUB / "table_07_source_pr_diagnostics.tex"
+    )
 
     summary.to_csv(summary_path, index=False)
-    tex_path.write_text(build_latex_table(summary), encoding="utf-8")
+    tex_path.write_text(
+        build_latex_table(summary),
+        encoding="utf-8",
+    )
 
-    print(f"Saved: {by_seed_path}")
+    print(f"Saved: {by_system_path}")
     print(f"Saved: {summary_path}")
     print(f"Saved: {tex_path}")
     print()

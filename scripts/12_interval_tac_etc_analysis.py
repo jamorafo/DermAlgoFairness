@@ -162,50 +162,171 @@ def parse_model_seed(path):
     return model, seed
 
 
+
 def discover_prediction_files():
-    all_csv = sorted(PRED_DIR.glob("*.csv"))
+    """
+    Discover one canonical source and target prediction file per model--seed pair.
 
-    source_files = []
-    target_files = []
+    Primary source:
+      ham10000_internal_test_predictions_*.csv
 
-    for p in all_csv:
-        name = p.name.lower()
+    Primary target:
+      bosque_public_predictions_*.csv
 
-        if "ham10000" in name and "prediction" in name:
-            source_files.append(p)
+    Whole-HAM10000 predictions are deliberately excluded from the primary
+    source-to-target TAC/ETC analysis.
 
-        if "bosque" in name and "prediction" in name:
-            target_files.append(p)
+    When duplicate files exist for the same model--seed pair, the file with the
+    latest timestamp in its filename is selected.
+    """
 
-    source_map = {}
-    target_map = {}
+    expected_pairs = {
+        (model, seed)
+        for model in MODEL_ORDER
+        for seed in range(1, 6)
+    }
 
-    for p in source_files:
-        model, seed = parse_model_seed(p)
-        if model is None or seed is None:
-            warnings.warn(f"Could not parse source file: {p}")
-            continue
-        source_map[(model, seed)] = p
+    timestamp_re = re.compile(r"_(\d{8}T\d{6}Z)\.csv$")
 
-    for p in target_files:
-        model, seed = parse_model_seed(p)
-        if model is None or seed is None:
-            warnings.warn(f"Could not parse target file: {p}")
-            continue
-        target_map[(model, seed)] = p
+    def latest_file_map(pattern, label, expected_n, require_skin_group=False):
+        grouped = {}
+
+        for path in sorted(PRED_DIR.glob(pattern)):
+            model, seed = parse_model_seed(path)
+
+            if model is None or seed is None:
+                warnings.warn(f"Could not parse {label} file: {path}")
+                continue
+
+            timestamp_match = timestamp_re.search(path.name)
+            if timestamp_match is None:
+                warnings.warn(f"Could not parse timestamp from {path.name}")
+                continue
+
+            timestamp = timestamp_match.group(1)
+            key = (model, seed)
+
+            grouped.setdefault(key, []).append(
+                {
+                    "timestamp": timestamp,
+                    "path": path,
+                }
+            )
+
+        selected = {}
+        manifest_rows = []
+
+        for key, candidates in sorted(grouped.items()):
+            latest = max(
+                candidates,
+                key=lambda item: item["timestamp"],
+            )
+
+            path = latest["path"]
+            df = pd.read_csv(path)
+
+            required = {"y_true", "y_score"}
+            if require_skin_group:
+                required.add("skin_group")
+
+            missing = required - set(df.columns)
+
+            if missing:
+                raise ValueError(
+                    f"{path} is missing required columns: {sorted(missing)}"
+                )
+
+            if len(df) != expected_n:
+                raise ValueError(
+                    f"{path} contains {len(df)} rows; expected {expected_n}."
+                )
+
+            if df["y_true"].isna().any():
+                raise ValueError(f"{path} contains missing y_true values.")
+
+            if df["y_score"].isna().any():
+                raise ValueError(f"{path} contains missing y_score values.")
+
+            selected[key] = path
+
+            y_true = pd.to_numeric(
+                df["y_true"],
+                errors="raise",
+            ).astype(int)
+
+            manifest_rows.append(
+                {
+                    "dataset": label,
+                    "model": key[0],
+                    "seed": key[1],
+                    "timestamp": latest["timestamp"],
+                    "n": len(df),
+                    "n_negative": int((y_true == 0).sum()),
+                    "n_positive": int((y_true == 1).sum()),
+                    "prediction_file": str(path.relative_to(ROOT)),
+                    "n_duplicate_candidates": len(candidates),
+                }
+            )
+
+        found_pairs = set(selected)
+        missing_pairs = expected_pairs - found_pairs
+        unexpected_pairs = found_pairs - expected_pairs
+
+        if missing_pairs:
+            raise RuntimeError(
+                f"Missing {label} model--seed pairs: {sorted(missing_pairs)}"
+            )
+
+        if unexpected_pairs:
+            raise RuntimeError(
+                f"Unexpected {label} model--seed pairs: "
+                f"{sorted(unexpected_pairs)}"
+            )
+
+        if len(selected) != 25:
+            raise RuntimeError(
+                f"Expected 25 canonical {label} files, found {len(selected)}."
+            )
+
+        return selected, manifest_rows
+
+    source_map, source_manifest = latest_file_map(
+        pattern="ham10000_internal_test_predictions_*_seed*.csv",
+        label="HAM10000 internal test",
+        expected_n=1002,
+        require_skin_group=False,
+    )
+
+    target_map, target_manifest = latest_file_map(
+        pattern="bosque_public_predictions_*_seed*.csv",
+        label="BOSQUE external",
+        expected_n=151,
+        require_skin_group=True,
+    )
 
     common = sorted(set(source_map).intersection(target_map))
 
-    print(f"Found source prediction files: {len(source_map)}")
-    print(f"Found target prediction files: {len(target_map)}")
-    print(f"Matched model-seed pairs: {len(common)}")
+    if set(common) != expected_pairs:
+        raise RuntimeError(
+            "The matched source--target pairs do not equal the expected "
+            "5 architectures x 5 seeds."
+        )
 
-    if len(common) == 0:
-        print("\nAvailable prediction-like files:")
-        for p in all_csv:
-            if "prediction" in p.name.lower():
-                print(" -", p)
-        raise RuntimeError("No matched source/target prediction files were found.")
+    manifest = pd.DataFrame(source_manifest + target_manifest)
+    manifest = manifest.sort_values(
+        ["dataset", "model", "seed"]
+    ).reset_index(drop=True)
+
+    logs_dir = ROOT / "outputs" / "logs"
+    logs_dir.mkdir(parents=True, exist_ok=True)
+
+    manifest_path = logs_dir / "primary_prediction_manifest.csv"
+    manifest.to_csv(manifest_path, index=False)
+
+    print(f"Canonical source prediction files: {len(source_map)}")
+    print(f"Canonical target prediction files: {len(target_map)}")
+    print(f"Matched model--seed pairs: {len(common)}")
+    print(f"Saved canonical input manifest: {manifest_path}")
 
     return source_map, target_map, common
 
@@ -492,7 +613,7 @@ def main():
 
     summary = (
         by_seed
-        .groupby(["metric_group", "model", "metric", "target_condition"], observed=False)
+        .groupby(["metric_group", "model", "metric", "target_condition"], observed=True)
         .agg(
             n_seeds=("seed", "nunique"),
             n_target=("n_target", "first"),
@@ -521,7 +642,7 @@ def main():
 
     consistency = (
         by_seed
-        .groupby(["metric_group", "metric", "target_condition", "joint_region"], observed=False)
+        .groupby(["metric_group", "metric", "target_condition", "joint_region"], observed=True)
         .size()
         .reset_index(name="n_model_seed_decisions")
         .sort_values(

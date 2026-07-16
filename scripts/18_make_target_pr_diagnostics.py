@@ -2,11 +2,12 @@
 # -*- coding: utf-8 -*-
 
 """
-Target-side Predictive Representativity diagnostics.
+Finite-ORP precision diagnostics for the BOSQUE target ORPs.
 
-This script extracts target-side performance estimates and confidence intervals
-from the interval TAC/ETC analysis and summarizes target ORP precision by
-metric and target condition.
+The script summarizes target interval half-widths for BOSQUE overall, light
+phototype, and dark phototype conditions. It evaluates finite-ORP precision
+only; it does not establish full Predictive Representativity, clinical
+adequacy, bias control, or population alignment.
 
 Input:
   outputs/tables/interval_tac_etc_by_seed.csv
@@ -15,14 +16,10 @@ Outputs:
   outputs/tables/target_pr_diagnostics_by_model_seed.csv
   outputs/publication_tables/table_08_target_pr_diagnostics.csv
   outputs/publication_tables/table_08_target_pr_diagnostics.tex
-
-Purpose:
-  This table documents whether BOSQUE overall, BOSQUE light, and BOSQUE dark
-  provide sufficiently precise target-side estimates for the selected metrics.
-  It complements the source-side PR diagnostic table.
 """
 
 from pathlib import Path
+
 import pandas as pd
 
 
@@ -38,7 +35,18 @@ INPUT = TABLES / "interval_tac_etc_by_seed.csv"
 PRIMARY_METRICS = ["recall", "auc_pr", "f1", "precision"]
 SECONDARY_METRICS = ["accuracy", "specificity", "auc_roc"]
 METRIC_ORDER = PRIMARY_METRICS + SECONDARY_METRICS
-TARGET_ORDER = ["BOSQUE overall", "BOSQUE light", "BOSQUE dark"]
+
+TARGET_ORDER = [
+    "BOSQUE overall",
+    "BOSQUE light",
+    "BOSQUE dark",
+]
+
+TARGET_SIZES = {
+    "BOSQUE overall": 151,
+    "BOSQUE light": 105,
+    "BOSQUE dark": 46,
+}
 
 METRIC_LABELS = {
     "recall": "Recall / sensitivity",
@@ -50,38 +58,18 @@ METRIC_LABELS = {
     "auc_roc": "AUC-ROC",
 }
 
-METRIC_GROUPS = {
-    "recall": "Primary",
-    "auc_pr": "Primary",
-    "f1": "Primary",
-    "precision": "Primary",
-    "accuracy": "Secondary",
-    "specificity": "Secondary",
-    "auc_roc": "Secondary",
-}
-
 TARGET_LABELS = {
     "BOSQUE overall": "Overall",
     "BOSQUE light": "Light phototype",
     "BOSQUE dark": "Dark phototype",
 }
 
-# Documentation tolerance for CI half-width.
-# This is not a clinical adequacy threshold. It is a PR documentation threshold
-# for finite-ORP precision of the target estimate.
 TARGET_HALF_WIDTH_TOLERANCE = {
-    "recall": 0.100,
-    "auc_pr": 0.100,
-    "f1": 0.100,
-    "precision": 0.100,
-    "accuracy": 0.100,
-    "specificity": 0.100,
-    "auc_roc": 0.100,
+    metric: 0.100 for metric in METRIC_ORDER
 }
 
 
 def latex_escape(value):
-    """Minimal LaTeX escaping for table text."""
     if pd.isna(value):
         return ""
 
@@ -100,68 +88,47 @@ def latex_escape(value):
     )
 
 
-def fmt(x, digits=3):
-    if pd.isna(x):
+def fmt(value, digits=3):
+    if pd.isna(value):
         return ""
-    return f"{float(x):.{digits}f}"
-
-
-def pr_interpretation(row):
-    """
-    Conservative PR interpretation based on precision-adequacy counts.
-
-    This does not decide clinical adequacy. It only describes whether the
-    finite BOSQUE ORP provides stable enough estimates under the chosen
-    half-width tolerance.
-    """
-
-    n = int(row["n_model_seed"])
-    adequate = int(row["n_precision_adequate"])
-
-    if adequate == n:
-        return "PR-adequate for BOSQUE-condition estimation"
-
-    if adequate >= 0.8 * n:
-        return "Mostly PR-adequate; some estimates imprecise"
-
-    if adequate >= 0.5 * n:
-        return "Partially PR-adequate; uncertainty material"
-
-    return "Evidentially limited by finite-ORP uncertainty"
+    return f"{float(value):.{digits}f}"
 
 
 def build_latex_table(summary):
-    lines = []
-
-    lines.append(r"\begin{table}[h!]")
-    lines.append(r"\centering")
-    lines.append(r"\scriptsize")
-    lines.append(
-        r"\caption{Target-side Predictive Representativity diagnostics for the BOSQUE external ORP.}"
-    )
-    lines.append(r"\label{tab:target-pr-diagnostics}")
-    lines.append(r"\setlength{\tabcolsep}{3pt}")
-    lines.append(r"\renewcommand{\arraystretch}{1.08}")
-    lines.append(r"\begin{tabular}{llrrrrrrp{4.1cm}}")
-    lines.append(r"\toprule")
-    lines.append(
-        r"\textbf{Metric} & "
-        r"\textbf{Target} & "
-        r"\textbf{$n$ decisions} & "
-        r"\textbf{$n_T$} & "
-        r"\textbf{Mean target} & "
-        r"\textbf{SD seeds} & "
-        r"\textbf{Mean SE} & "
-        r"\textbf{Max half-width} & "
-        r"\textbf{PR interpretation} \\"
-    )
-    lines.append(r"\midrule")
+    lines = [
+        r"\begin{table}[h!]",
+        r"\centering",
+        r"\scriptsize",
+        (
+            r"\caption{Finite-ORP precision of BOSQUE overall and "
+            r"phototype-specific target performance estimates.}"
+        ),
+        r"\label{tab:target-pr-diagnostics}",
+        r"\setlength{\tabcolsep}{3pt}",
+        r"\renewcommand{\arraystretch}{1.08}",
+        r"\begin{tabular}{llrrrrrrr}",
+        r"\toprule",
+        (
+            r"\textbf{Metric} & "
+            r"\textbf{Target} & "
+            r"\textbf{$n$ systems} & "
+            r"\textbf{$n_T$} & "
+            r"\textbf{Mean performance} & "
+            r"\textbf{SD systems} & "
+            r"\textbf{Mean half-width} & "
+            r"\textbf{Max half-width} & "
+            r"\textbf{Within tolerance} \\"
+        ),
+        r"\midrule",
+    ]
 
     previous_metric = None
 
     for _, row in summary.iterrows():
         metric = latex_escape(row["Metric"])
-        metric_cell = metric if metric != previous_metric else ""
+        metric_cell = (
+            metric if metric != previous_metric else ""
+        )
 
         lines.append(
             f"{metric_cell} & "
@@ -169,10 +136,11 @@ def build_latex_table(summary):
             f"{int(row['n_model_seed'])} & "
             f"{int(row['n_target'])} & "
             f"{fmt(row['mean_target'])} & "
-            f"{fmt(row['sd_across_seeds'])} & "
-            f"{fmt(row['mean_se'])} & "
+            f"{fmt(row['sd_across_systems'])} & "
+            f"{fmt(row['mean_half_width'])} & "
             f"{fmt(row['max_half_width'])} & "
-            f"{latex_escape(row['PR interpretation'])} \\\\"
+            f"{int(row['n_within_tolerance'])}/"
+            f"{int(row['n_model_seed'])} \\\\"
         )
 
         previous_metric = metric
@@ -180,24 +148,31 @@ def build_latex_table(summary):
         if row["Target condition"] == "Dark phototype":
             lines.append(r"\addlinespace")
 
-    lines.append(r"\bottomrule")
-    lines.append(r"\end{tabular}")
-    lines.append(r"\begin{flushleft}")
-    lines.append(r"\footnotesize")
-    lines.append(
-        r"Notes: Each row summarizes 25 model--seed target estimates, "
-        r"corresponding to five architectures trained under five random seeds. "
-        r"Target uncertainty is computed on the non-augmented BOSQUE external ORP. "
-        r"The approximate standard error is obtained from the bootstrap confidence "
-        r"interval half-width divided by 1.96. The PR interpretation concerns "
-        r"finite-ORP precision under the BOSQUE evaluation condition; it is not a "
-        r"clinical adequacy decision and does not imply population-level "
-        r"generalization beyond BOSQUE. The precision-adequacy count uses a "
-        r"documentation tolerance of CI half-width $\leq 0.100$, which can be "
-        r"modified in the script."
+    lines.extend(
+        [
+            r"\bottomrule",
+            r"\end{tabular}",
+            r"\begin{flushleft}",
+            r"\footnotesize",
+            (
+                r"Notes: Each row summarizes 25 locked architecture--seed "
+                r"systems evaluated on a non-augmented BOSQUE target condition. "
+                r"Mean performance and SD describe variation across the 25 "
+                r"locked systems; the SD therefore combines architecture and "
+                r"training-seed variation. Precision is summarized by the "
+                r"half-width of the 95\% image-level percentile-bootstrap "
+                r"interval based on 2000 replicates. ``Within tolerance'' "
+                r"denotes a half-width $\leq 0.100$. This documentation "
+                r"tolerance is not a clinical threshold. Satisfying it "
+                r"establishes only finite-ORP precision under the observed "
+                r"BOSQUE condition, not full Predictive Representativity, "
+                r"bias control, interval coverage, or generalizability beyond "
+                r"BOSQUE."
+            ),
+            r"\end{flushleft}",
+            r"\end{table}",
+        ]
     )
-    lines.append(r"\end{flushleft}")
-    lines.append(r"\end{table}")
 
     return "\n".join(lines)
 
@@ -221,72 +196,146 @@ def main():
 
     missing = required - set(df.columns)
     if missing:
-        raise ValueError(f"Missing required columns in {INPUT}: {missing}")
+        raise ValueError(
+            f"Missing required columns in {INPUT}: {sorted(missing)}"
+        )
 
-    tgt = df[
-        [
-            "model",
-            "seed",
-            "metric",
-            "target_condition",
-            "n_target",
-            "target_performance",
-            "target_ci_low",
-            "target_ci_high",
+    target = (
+        df[
+            [
+                "model",
+                "seed",
+                "metric",
+                "target_condition",
+                "n_target",
+                "target_performance",
+                "target_ci_low",
+                "target_ci_high",
+            ]
         ]
-    ].copy()
+        .drop_duplicates(
+            ["model", "seed", "metric", "target_condition"]
+        )
+        .copy()
+    )
 
-    tgt = tgt.drop_duplicates(
-        subset=["model", "seed", "metric", "target_condition"]
-    ).copy()
+    keys = [
+        "model",
+        "seed",
+        "metric",
+        "target_condition",
+    ]
 
-    tgt["target_half_width"] = (tgt["target_ci_high"] - tgt["target_ci_low"]) / 2
-    tgt["target_se_approx"] = tgt["target_half_width"] / 1.96
-    tgt["target_precision_tolerance"] = tgt["metric"].map(
+    if target.duplicated(keys).any():
+        raise RuntimeError(
+            "Duplicate target model--seed--metric--condition rows remain."
+        )
+
+    expected_rows = 25 * len(METRIC_ORDER) * len(TARGET_ORDER)
+    if len(target) != expected_rows:
+        raise RuntimeError(
+            f"Expected {expected_rows} target rows, found {len(target)}."
+        )
+
+    for condition, expected_n in TARGET_SIZES.items():
+        observed_n = set(
+            target.loc[
+                target["target_condition"] == condition,
+                "n_target",
+            ]
+        )
+
+        if observed_n != {expected_n}:
+            raise RuntimeError(
+                f"{condition}: expected n={expected_n}, "
+                f"found {sorted(observed_n)}."
+            )
+
+    target["target_half_width"] = (
+        target["target_ci_high"] - target["target_ci_low"]
+    ) / 2
+
+    target["target_half_width_tolerance"] = target["metric"].map(
         TARGET_HALF_WIDTH_TOLERANCE
     )
-    tgt["target_precision_adequate"] = (
-        tgt["target_half_width"] <= tgt["target_precision_tolerance"]
+
+    if target["target_half_width_tolerance"].isna().any():
+        unknown = target.loc[
+            target["target_half_width_tolerance"].isna(),
+            "metric",
+        ].unique()
+        raise RuntimeError(f"Missing tolerances for metrics: {unknown}")
+
+    target["target_within_tolerance"] = (
+        target["target_half_width"]
+        <= target["target_half_width_tolerance"]
     )
 
-    tgt["metric"] = pd.Categorical(
-        tgt["metric"],
+    target["metric"] = pd.Categorical(
+        target["metric"],
         categories=METRIC_ORDER,
         ordered=True,
     )
 
-    tgt["target_condition"] = pd.Categorical(
-        tgt["target_condition"],
+    target["target_condition"] = pd.Categorical(
+        target["target_condition"],
         categories=TARGET_ORDER,
         ordered=True,
     )
 
-    tgt = tgt.sort_values(["metric", "target_condition", "model", "seed"]).reset_index(
-        drop=True
-    )
+    target = target.sort_values(
+        ["metric", "target_condition", "model", "seed"]
+    ).reset_index(drop=True)
 
-    by_seed_path = TABLES / "target_pr_diagnostics_by_model_seed.csv"
-    tgt.to_csv(by_seed_path, index=False)
+    by_system_path = (
+        TABLES / "target_pr_diagnostics_by_model_seed.csv"
+    )
+    target.to_csv(by_system_path, index=False)
 
     summary = (
-        tgt.groupby(["metric", "target_condition"], observed=False)
+        target.groupby(
+            ["metric", "target_condition"],
+            observed=True,
+        )
         .agg(
             n_model_seed=("target_performance", "size"),
             n_target=("n_target", "first"),
             mean_target=("target_performance", "mean"),
-            sd_across_seeds=("target_performance", "std"),
-            mean_se=("target_se_approx", "mean"),
-            max_se=("target_se_approx", "max"),
+            sd_across_systems=("target_performance", "std"),
             mean_half_width=("target_half_width", "mean"),
             max_half_width=("target_half_width", "max"),
-            n_precision_adequate=("target_precision_adequate", "sum"),
+            half_width_tolerance=(
+                "target_half_width_tolerance",
+                "first",
+            ),
+            n_within_tolerance=(
+                "target_within_tolerance",
+                "sum",
+            ),
         )
         .reset_index()
     )
 
-    summary["Metric"] = summary["metric"].map(METRIC_LABELS)
-    summary["Target condition"] = summary["target_condition"].map(TARGET_LABELS)
-    summary["PR interpretation"] = summary.apply(pr_interpretation, axis=1)
+    if len(summary) != 21:
+        raise RuntimeError(
+            f"Expected 21 target summary rows, found {len(summary)}."
+        )
+
+    if not (summary["n_model_seed"] == 25).all():
+        raise RuntimeError(
+            "At least one target metric-condition does not contain "
+            "25 systems."
+        )
+
+    summary["Metric"] = (
+        summary["metric"].astype(str).map(METRIC_LABELS)
+    )
+
+    summary["Target condition"] = (
+        summary["target_condition"]
+        .astype(str)
+        .map(TARGET_LABELS)
+    )
 
     summary = summary[
         [
@@ -295,23 +344,28 @@ def main():
             "n_model_seed",
             "n_target",
             "mean_target",
-            "sd_across_seeds",
-            "mean_se",
-            "max_se",
+            "sd_across_systems",
             "mean_half_width",
             "max_half_width",
-            "n_precision_adequate",
-            "PR interpretation",
+            "half_width_tolerance",
+            "n_within_tolerance",
         ]
     ]
 
-    summary_path = PUB / "table_08_target_pr_diagnostics.csv"
-    tex_path = PUB / "table_08_target_pr_diagnostics.tex"
+    summary_path = (
+        PUB / "table_08_target_pr_diagnostics.csv"
+    )
+    tex_path = (
+        PUB / "table_08_target_pr_diagnostics.tex"
+    )
 
     summary.to_csv(summary_path, index=False)
-    tex_path.write_text(build_latex_table(summary), encoding="utf-8")
+    tex_path.write_text(
+        build_latex_table(summary),
+        encoding="utf-8",
+    )
 
-    print(f"Saved: {by_seed_path}")
+    print(f"Saved: {by_system_path}")
     print(f"Saved: {summary_path}")
     print(f"Saved: {tex_path}")
     print()

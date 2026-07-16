@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Create publication-ready interval TAC/ETC consistency table.
+Create a publication-ready interval adequacy and preservation table.
 
 Input:
   outputs/tables/interval_tac_etc_consistency.csv
@@ -172,23 +172,23 @@ def build_publication_table(df):
             "Metric group": wide["metric_group"].astype(str),
             "Metric": wide["metric"].astype(str).map(METRIC_LABELS),
             "Target condition": wide["target_condition"].astype(str).map(TARGET_LABELS),
-            "Adequate and transported": wide["adequate and transported"].astype(int),
+            "Adequate and preserved": wide["adequate and transported"].astype(int),
             "Inconclusive": wide["inconclusive"].astype(int),
-            "Not adequate and not transported": wide[
+            "Not adequate and not preserved": wide[
                 "not adequate and not transported"
             ].astype(int),
-            "Transported but inadequate": wide["transported but inadequate"].astype(int),
-            "Adequate but not transported": wide["adequate but not transported"].astype(int),
+            "Preserved but inadequate": wide["transported but inadequate"].astype(int),
+            "Adequate but not preserved": wide["adequate but not transported"].astype(int),
             "Evidentially unresolved": wide["evidentially unresolved"].astype(int),
         }
     )
 
     decision_cols = [
-        "Adequate and transported",
+        "Adequate and preserved",
         "Inconclusive",
-        "Not adequate and not transported",
-        "Transported but inadequate",
-        "Adequate but not transported",
+        "Not adequate and not preserved",
+        "Preserved but inadequate",
+        "Adequate but not preserved",
         "Evidentially unresolved",
     ]
 
@@ -204,7 +204,7 @@ def build_latex_table(out):
     lines.append(r"\centering")
     lines.append(r"\scriptsize")
     lines.append(
-        r"\caption{Interval-based TAC/ETC decision consistency across model--seed replicas.}"
+        r"\caption{Interval-based target adequacy and performance-preservation decisions across locked model--seed systems.}"
     )
     lines.append(r"\label{tab:interval-tac-etc-consistency}")
     lines.append(r"\setlength{\tabcolsep}{3pt}")
@@ -215,11 +215,11 @@ def build_latex_table(out):
         r"\textbf{Group} & "
         r"\textbf{Metric} & "
         r"\textbf{Target} & "
-        r"\textbf{Adeq. + transp.} & "
+        r"\textbf{Adeq. + pres.} & "
         r"\textbf{Inconc.} & "
-        r"\textbf{Not adeq. + not transp.} & "
-        r"\textbf{Transp. but inad.} & "
-        r"\textbf{Adeq. but not transp.} & "
+        r"\textbf{Not adeq. + not pres.} & "
+        r"\textbf{Pres. but inad.} & "
+        r"\textbf{Adeq. but not pres.} & "
         r"\textbf{Unresolved} & "
         r"\textbf{Total} \\"
     )
@@ -239,11 +239,11 @@ def build_latex_table(out):
             f"{group_cell} & "
             f"{metric_cell} & "
             f"{latex_escape(row['Target condition'])} & "
-            f"{int(row['Adequate and transported'])} & "
+            f"{int(row['Adequate and preserved'])} & "
             f"{int(row['Inconclusive'])} & "
-            f"{int(row['Not adequate and not transported'])} & "
-            f"{int(row['Transported but inadequate'])} & "
-            f"{int(row['Adequate but not transported'])} & "
+            f"{int(row['Not adequate and not preserved'])} & "
+            f"{int(row['Preserved but inadequate'])} & "
+            f"{int(row['Adequate but not preserved'])} & "
             f"{int(row['Evidentially unresolved'])} & "
             f"{int(row['Total model--seed decisions'])} \\\\"
         )
@@ -259,12 +259,15 @@ def build_latex_table(out):
     lines.append(r"\begin{flushleft}")
     lines.append(r"\footnotesize")
     lines.append(
-        r"Notes: Each row summarizes model--seed decisions across five "
-        r"architectures and five random seeds. Primary metrics are used for the "
-        r"main PR/TAC/ETC interpretation. Secondary metrics are reported "
-        r"descriptively. TAC denotes the Target Adequacy Criterion and ETC "
-        r"denotes the External Transportability Criterion. Decisions are "
-        r"interval-based."
+        r"Notes: Each row summarizes 25 locked model--seed decisions, "
+        r"corresponding to five architectures and five random seeds. For the "
+        r"overall BOSQUE condition, preservation denotes ETC transportability "
+        r"relative to the HAM10000 held-out source estimate. For the light- and "
+        r"dark-phototype conditions, preservation denotes comparison with the "
+        r"overall HAM10000 source benchmark and is not subgroup "
+        r"transportability. Primary metrics drive the main interpretation; "
+        r"secondary metrics are descriptive. Decisions are based on 95\% "
+        r"intervals."
     )
     lines.append(r"\end{flushleft}")
     lines.append(r"\end{table}")

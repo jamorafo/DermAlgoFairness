@@ -1,13 +1,13 @@
 \begin{table}[h!]
 \centering
 \scriptsize
-\caption{Interval-based TAC/ETC decision consistency across model--seed replicas.}
+\caption{Interval-based target adequacy and performance-preservation decisions across locked model--seed systems.}
 \label{tab:interval-tac-etc-consistency}
 \setlength{\tabcolsep}{3pt}
 \renewcommand{\arraystretch}{1.08}
 \begin{tabular}{lllrrrrrrr}
 \toprule
-\textbf{Group} & \textbf{Metric} & \textbf{Target} & \textbf{Adeq. + transp.} & \textbf{Inconc.} & \textbf{Not adeq. + not transp.} & \textbf{Transp. but inad.} & \textbf{Adeq. but not transp.} & \textbf{Unresolved} & \textbf{Total} \\
+\textbf{Group} & \textbf{Metric} & \textbf{Target} & \textbf{Adeq. + pres.} & \textbf{Inconc.} & \textbf{Not adeq. + not pres.} & \textbf{Pres. but inad.} & \textbf{Adeq. but not pres.} & \textbf{Unresolved} & \textbf{Total} \\
 \midrule
 Primary & Recall / sensitivity & Overall & 0 & 16 & 9 & 0 & 0 & 0 & 25 \\
  &  & Light phototype & 0 & 18 & 7 & 0 & 0 & 0 & 25 \\
@@ -41,6 +41,6 @@ Secondary & Accuracy & Overall & 0 & 5 & 20 & 0 & 0 & 0 & 25 \\
 \end{tabular}
 \begin{flushleft}
 \footnotesize
-Notes: Each row summarizes model--seed decisions across five architectures and five random seeds. Primary metrics are used for the main PR/TAC/ETC interpretation. Secondary metrics are reported descriptively. TAC denotes the Target Adequacy Criterion and ETC denotes the External Transportability Criterion. Decisions are interval-based.
+Notes: Each row summarizes 25 locked model--seed decisions, corresponding to five architectures and five random seeds. For the overall BOSQUE condition, preservation denotes ETC transportability relative to the HAM10000 held-out source estimate. For the light- and dark-phototype conditions, preservation denotes comparison with the overall HAM10000 source benchmark and is not subgroup transportability. Primary metrics drive the main interpretation; secondary metrics are descriptive. Decisions are based on 95\% intervals.
 \end{flushleft}
 \end{table}

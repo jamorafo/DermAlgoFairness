@@ -1,4 +1,4 @@
-Metric group,Metric,Target condition,Adequate and transported,Inconclusive,Not adequate and not transported,Transported but inadequate,Adequate but not transported,Evidentially unresolved,Total model--seed decisions
+Metric group,Metric,Target condition,Adequate and preserved,Inconclusive,Not adequate and not preserved,Preserved but inadequate,Adequate but not preserved,Evidentially unresolved,Total model--seed decisions
 Primary,Recall / sensitivity,Overall,0,16,9,0,0,0,25
 Primary,Recall / sensitivity,Light phototype,0,18,7,0,0,0,25
 Primary,Recall / sensitivity,Dark phototype,0,18,7,0,0,0,25
