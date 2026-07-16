@@ -2,17 +2,15 @@
 # -*- coding: utf-8 -*-
 
 """
-Generate LaTeX versions of publication Tables 1--3.
+Generate LaTeX versions of publication Tables 1--2.
 
 Inputs:
   outputs/publication_tables/table_01_internal_external_performance.csv
   outputs/publication_tables/table_02_bosque_subgroup_performance.csv
-  outputs/publication_tables/table_03_fdr_significant_light_dark_gaps.csv
 
 Outputs:
   outputs/publication_tables/table_01_internal_external_performance.tex
   outputs/publication_tables/table_02_bosque_subgroup_performance.tex
-  outputs/publication_tables/table_03_fdr_significant_light_dark_gaps.tex
 
 The script avoids pandas.to_latex() to prevent optional jinja2 dependency issues.
 """
@@ -288,143 +286,12 @@ def make_table_02():
     write_text(output_path, "\n".join(lines))
 
 
-def make_table_03():
-    """
-    FDR-adjusted light-dark subgroup performance gaps.
-    """
-
-    input_path = PUB / "table_03_fdr_significant_light_dark_gaps.csv"
-    output_path = PUB / "table_03_fdr_significant_light_dark_gaps.tex"
-
-    if not input_path.exists():
-        raise FileNotFoundError(f"Missing input file: {input_path}")
-
-    df = pd.read_csv(input_path)
-
-    expected = [
-        "model",
-        "metric",
-        "dark",
-        "light",
-        "gap_light_minus_dark",
-        "bootstrap_ci_low",
-        "bootstrap_ci_high",
-        "p_value_bootstrap",
-        "p_value_fdr_bh",
-        "sig_fdr",
-    ]
-
-    missing = set(expected) - set(df.columns)
-    if missing:
-        raise ValueError(f"Table 3 missing columns: {missing}")
-
-    metric_labels = {
-        "accuracy": "Accuracy",
-        "precision": "Precision",
-        "recall": "Recall / sensitivity",
-        "specificity": "Specificity",
-        "f1": "F1-score",
-        "auc_roc": "AUC-ROC",
-        "auc_pr": "AUC-PR",
-    }
-
-    metric_order = {
-        "recall": 0,
-        "auc_pr": 1,
-        "f1": 2,
-        "precision": 3,
-        "auc_roc": 4,
-        "specificity": 5,
-        "accuracy": 6,
-    }
-
-    model_order = {
-        "ResNet50": 0,
-        "DenseNet121": 1,
-        "MobileNetV2": 2,
-        "EfficientNetV2B0": 3,
-        "VGG16": 4,
-    }
-
-    df = df.copy()
-
-    # Keep all rows in the file, but sort them for readability.
-    df["metric_order"] = df["metric"].map(metric_order).fillna(999)
-    df["model_order"] = df["model"].map(model_order).fillna(999)
-    df = df.sort_values(["metric_order", "model_order"]).drop(
-        columns=["metric_order", "model_order"]
-    )
-
-    def fmt_num(x, digits=3):
-        if pd.isna(x):
-            return ""
-        return f"{float(x):.{digits}f}"
-
-    def fmt_p(x):
-        if pd.isna(x):
-            return ""
-        x = float(x)
-        if x < 0.001:
-            return r"$<0.001$"
-        return f"{x:.3f}"
-
-    lines = []
-    lines.append(r"\begin{table}[h!]")
-    lines.append(r"\centering")
-    lines.append(r"\scriptsize")
-    lines.append(
-        r"\caption{FDR-adjusted BOSQUE light--dark subgroup performance gaps.}"
-    )
-    lines.append(r"\label{tab:fdr-light-dark-gaps}")
-    lines.append(r"\setlength{\tabcolsep}{4pt}")
-    lines.append(r"\renewcommand{\arraystretch}{1.08}")
-    lines.append(r"\begin{tabular}{llrrrrrr}")
-    lines.append(r"\toprule")
-    lines.append(
-        r"\textbf{Model} & \textbf{Metric} & \textbf{Dark} & "
-        r"\textbf{Light} & \textbf{Gap} & \textbf{95\% CI} & "
-        r"\textbf{$p_{\mathrm{BH}}$} & \textbf{Sig.} \\"
-    )
-    lines.append(r"\midrule")
-
-    for _, row in df.iterrows():
-        ci = f"[{fmt_num(row['bootstrap_ci_low'])}, {fmt_num(row['bootstrap_ci_high'])}]"
-        metric = metric_labels.get(row["metric"], row["metric"])
-
-        lines.append(
-            f"{latex_escape(row['model'])} & "
-            f"{latex_escape(metric)} & "
-            f"{fmt_num(row['dark'])} & "
-            f"{fmt_num(row['light'])} & "
-            f"{fmt_num(row['gap_light_minus_dark'])} & "
-            f"{latex_escape(ci)} & "
-            f"{fmt_p(row['p_value_fdr_bh'])} & "
-            f"{latex_escape(row['sig_fdr'])} \\\\"
-        )
-
-    lines.append(r"\bottomrule")
-    lines.append(r"\end{tabular}")
-    lines.append(r"\begin{flushleft}")
-    lines.append(r"\footnotesize")
-    lines.append(
-        r"Notes: The gap is defined as light-phototype performance minus "
-        r"dark-phototype performance on the BOSQUE external target ORP. Positive "
-        r"values indicate higher performance in the light-phototype group. "
-        r"Confidence intervals were obtained by bootstrap resampling. "
-        r"$p_{\mathrm{BH}}$ denotes the Benjamini--Hochberg false-discovery-rate "
-        r"adjusted $p$-value. Only rows retained in the source publication table "
-        r"are reported."
-    )
-    lines.append(r"\end{flushleft}")
-    lines.append(r"\end{table}")
-
-    write_text(output_path, "\n".join(lines))
 
 
 def main():
     make_table_01()
     make_table_02()
-    make_table_03()
+    print("Table 3 is generated by scripts/20_make_seed_aware_gap_publication_outputs.py")
 
 
 if __name__ == "__main__":
