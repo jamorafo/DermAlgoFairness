@@ -32,7 +32,7 @@ DermAlgoFairness/
 │       ├── detailed_metrics_test_model_final_*.csv
 │       └── detailed_metrics_full.csv
 │
-├── dockerfile             # Docker setup for GPU-enabled reproducibility
+├── Dockerfile             # Docker setup for GPU-enabled reproducibility
 ```
 
 ---
