@@ -50,24 +50,13 @@ outputs/logs/
 outputs/tables/*_all_seed_metrics.csv
 outputs/tables/*_all_seed_subgroup_metrics.csv
 
-# Python cache
+# ---------------------------------------------------------------------
+# Python environments and caches
+# ---------------------------------------------------------------------
 __pycache__/
 *.pyc
 .venv/
-
-# ---------------------------------------------------------------------
-# R publication figures
-# ---------------------------------------------------------------------
-!outputs/figures-r/
-!outputs/figures-r/**
-
-# ---------------------------------------------------------------------
-# Generated publication tables
-# ---------------------------------------------------------------------
-!outputs/publication_tables/
-!outputs/publication_tables/**
-*.tex
-!outputs/publication_tables/*.tex
+.venv-wholeham/
 
 # ---------------------------------------------------------------------
 # Local R files
@@ -76,3 +65,21 @@ __pycache__/
 .RData
 .Ruserdata
 .Rproj.user/
+
+# ---------------------------------------------------------------------
+# Local writing files
+# ---------------------------------------------------------------------
+*.tex
+
+# ---------------------------------------------------------------------
+# Generated R publication figures
+# ---------------------------------------------------------------------
+!outputs/figures-r/
+!outputs/figures-r/**
+
+# ---------------------------------------------------------------------
+# Generated publication tables: LaTeX only
+# ---------------------------------------------------------------------
+!outputs/publication_tables/
+outputs/publication_tables/*
+!outputs/publication_tables/*.tex
