@@ -1,0 +1,30 @@
+\begin{table}[h!]
+\centering
+\scriptsize
+\caption{Objective Reference Point and Predictive Representativity assessment by validation claim.}
+\label{tab:orp-pr-assessment}
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabular}{p{2.5cm}p{2.5cm}p{2.1cm}p{3.4cm}p{2.5cm}p{3.3cm}p{3.2cm}}
+\toprule
+\textbf{Claim} & \textbf{ORP} & \textbf{Estimand} & \textbf{Sampling/evaluation basis} & \textbf{PR status} & \textbf{Scope of inference} & \textbf{Limitation} \\
+\midrule
+Source overall performance & HAM10000 internal test split & $\theta_S^M(f_{a,s})$ & Held-out source evaluation split from the HAM10000 empirical frame; non-augmented test images only. & Conditionally PR-adequate & Overall performance under the HAM10000 internal evaluation condition. & Does not establish performance in a broader clinical deployment population. \\
+\addlinespace
+Source subgroup performance & HAM10000 internal test split & $\theta_{S,g}^M(f_{a,s})$ & Source subgroup labels by skin phototype are unavailable or not reliable for the intended subgroup estimand. & PR-inadequate & Not supported. & Direct source subgroup TAC/ETC and source-subgroup transportability are not estimable. \\
+\addlinespace
+Target overall performance & BOSQUE external test set & $\theta_T^M(f_{a,s})$ & External target-side evaluation ORP with non-augmented target images. & PR-adequate with limited scope & Overall performance under the BOSQUE evaluation condition. & Does not by itself support national or regional deployment inference. \\
+\addlinespace
+Target subgroup performance & BOSQUE phototype groups & $\theta_{T,g}^M(f_{a,s})$ & Target-side phototype-labelled ORP; subgroup estimates computed within BOSQUE light and dark groups. & PR-adequate as diagnostic evidence & Phototype-specific performance under the BOSQUE subgroup evaluation condition. & Subgroup sample size and finite-ORP uncertainty limit formal adjudication. \\
+\addlinespace
+Benchmark-preservation subgroup comparison & HAM10000 overall source ORP and BOSQUE subgroup ORP & $\Delta_{S\to T,g}^{M,\mathrm{bench}}(f_{a,s})$ & Overall source performance is compared with target subgroup performance. & PR-adequate only as benchmark preservation & Whether target subgroup performance preserves the overall source benchmark. & Not equivalent to full source-subgroup-to-target-subgroup transportability. \\
+\addlinespace
+Population-level deployment performance & BOSQUE or HAM10000 alone & $\theta_{\mathrm{deploy}}^M(f_{a,s})$ & No documented probability sampling frame for a broader deployment population. & Evidentially unresolved / not supported & Not supported by the available ORPs alone. & Requires a prospectively defined deployment ORP or defensible population sampling design. \\
+\addlinespace
+\bottomrule
+\end{tabular}
+\begin{flushleft}
+\footnotesize
+Notes: PR denotes Predictive Representativity. The table separates the evidential status of each claim before TAC/ETC decision rules are applied. A PR-adequate claim is not necessarily adequate or transported; it only means that the ORP, estimand, estimator, and uncertainty procedure are aligned with the stated scope of inference.
+\end{flushleft}
+\end{table}
