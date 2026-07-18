@@ -19,7 +19,7 @@ data/interim/
 data/processed/
 data/collected/
 confidential_data/
-outputs/
+outputs/*
 output/
 *.h5
 *.hdf5
@@ -54,3 +54,25 @@ outputs/tables/*_all_seed_subgroup_metrics.csv
 __pycache__/
 *.pyc
 .venv/
+
+# ---------------------------------------------------------------------
+# R publication figures
+# ---------------------------------------------------------------------
+!outputs/figures-r/
+!outputs/figures-r/**
+
+# ---------------------------------------------------------------------
+# Generated publication tables
+# ---------------------------------------------------------------------
+!outputs/publication_tables/
+!outputs/publication_tables/**
+*.tex
+!outputs/publication_tables/*.tex
+
+# ---------------------------------------------------------------------
+# Local R files
+# ---------------------------------------------------------------------
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
