@@ -1,0 +1,33 @@
+\begin{table}[h!]
+\centering
+\scriptsize
+\caption{Internal source and external target performance across five training seeds.}
+\label{tab:internal-external-performance}
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabular}{llrrrrrrr}
+\toprule
+\textbf{Model} & \textbf{Evaluation ORP} & \textbf{Acc.} & \textbf{Prec.} & \textbf{Recall} & \textbf{Spec.} & \textbf{F1} & \textbf{AUC-ROC} & \textbf{AUC-PR} \\
+\midrule
+ResNet50 & HAM10000 internal & 0.892 $\pm$ 0.012 & 0.726 $\pm$ 0.030 & 0.717 $\pm$ 0.041 & 0.934 $\pm$ 0.008 & 0.721 $\pm$ 0.032 & 0.934 $\pm$ 0.011 & 0.789 $\pm$ 0.038 \\
+ & BOSQUE external & 0.667 $\pm$ 0.011 & 0.908 $\pm$ 0.021 & 0.542 $\pm$ 0.028 & 0.898 $\pm$ 0.031 & 0.678 $\pm$ 0.018 & 0.827 $\pm$ 0.014 & 0.898 $\pm$ 0.015 \\
+\addlinespace
+DenseNet121 & HAM10000 internal & 0.862 $\pm$ 0.013 & 0.630 $\pm$ 0.033 & 0.716 $\pm$ 0.024 & 0.897 $\pm$ 0.012 & 0.670 $\pm$ 0.027 & 0.913 $\pm$ 0.008 & 0.733 $\pm$ 0.023 \\
+ & BOSQUE external & 0.699 $\pm$ 0.040 & 0.924 $\pm$ 0.017 & 0.586 $\pm$ 0.075 & 0.909 $\pm$ 0.031 & 0.714 $\pm$ 0.054 & 0.842 $\pm$ 0.029 & 0.902 $\pm$ 0.020 \\
+\addlinespace
+MobileNetV2 & HAM10000 internal & 0.863 $\pm$ 0.007 & 0.633 $\pm$ 0.019 & 0.716 $\pm$ 0.020 & 0.899 $\pm$ 0.008 & 0.672 $\pm$ 0.015 & 0.911 $\pm$ 0.011 & 0.726 $\pm$ 0.045 \\
+ & BOSQUE external & 0.634 $\pm$ 0.029 & 0.809 $\pm$ 0.024 & 0.571 $\pm$ 0.036 & 0.751 $\pm$ 0.031 & 0.669 $\pm$ 0.031 & 0.758 $\pm$ 0.014 & 0.858 $\pm$ 0.007 \\
+\addlinespace
+EfficientNetV2B0 & HAM10000 internal & 0.880 $\pm$ 0.008 & 0.705 $\pm$ 0.038 & 0.669 $\pm$ 0.041 & 0.931 $\pm$ 0.016 & 0.685 $\pm$ 0.017 & 0.916 $\pm$ 0.007 & 0.751 $\pm$ 0.032 \\
+ & BOSQUE external & 0.744 $\pm$ 0.020 & 0.901 $\pm$ 0.023 & 0.682 $\pm$ 0.033 & 0.860 $\pm$ 0.039 & 0.776 $\pm$ 0.021 & 0.855 $\pm$ 0.006 & 0.913 $\pm$ 0.008 \\
+\addlinespace
+VGG16 & HAM10000 internal & 0.863 $\pm$ 0.006 & 0.630 $\pm$ 0.022 & 0.736 $\pm$ 0.049 & 0.894 $\pm$ 0.015 & 0.677 $\pm$ 0.016 & 0.919 $\pm$ 0.007 & 0.747 $\pm$ 0.020 \\
+ & BOSQUE external & 0.651 $\pm$ 0.025 & 0.882 $\pm$ 0.012 & 0.534 $\pm$ 0.041 & 0.868 $\pm$ 0.017 & 0.664 $\pm$ 0.034 & 0.797 $\pm$ 0.021 & 0.881 $\pm$ 0.013 \\
+\addlinespace
+\bottomrule
+\end{tabular}
+\begin{flushleft}
+\footnotesize
+Notes: Values are reported as mean $\pm$ standard deviation across five independently trained model replicas. HAM10000 internal denotes the source-side internal evaluation ORP. BOSQUE external denotes the external target-side ORP. Metrics are computed for the malignant class under the binary diagnostic task.
+\end{flushleft}
+\end{table}

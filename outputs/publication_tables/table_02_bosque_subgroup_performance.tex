@@ -1,0 +1,33 @@
+\begin{table}[h!]
+\centering
+\scriptsize
+\caption{BOSQUE target-side subgroup performance by phototype group.}
+\label{tab:bosque-subgroup-performance}
+\setlength{\tabcolsep}{3.2pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabular}{llrrrrrrrr}
+\toprule
+\textbf{Model} & \textbf{Subgroup} & \textbf{$n$} & \textbf{Acc.} & \textbf{Prec.} & \textbf{Recall} & \textbf{Spec.} & \textbf{F1} & \textbf{AUC-ROC} & \textbf{AUC-PR} \\
+\midrule
+ResNet50 & Light phototype & 105 & 0.667 $\pm$ 0.015 & 0.944 $\pm$ 0.015 & 0.580 $\pm$ 0.026 & 0.905 $\pm$ 0.029 & 0.718 $\pm$ 0.017 & 0.874 $\pm$ 0.006 & 0.945 $\pm$ 0.009 \\
+ & Dark phototype & 46 & 0.674 $\pm$ 0.027 & 0.772 $\pm$ 0.113 & 0.421 $\pm$ 0.056 & 0.887 $\pm$ 0.059 & 0.540 $\pm$ 0.041 & 0.743 $\pm$ 0.018 & 0.756 $\pm$ 0.027 \\
+\addlinespace
+DenseNet121 & Light phototype & 105 & 0.688 $\pm$ 0.051 & 0.952 $\pm$ 0.019 & 0.605 $\pm$ 0.078 & 0.914 $\pm$ 0.041 & 0.737 $\pm$ 0.056 & 0.849 $\pm$ 0.024 & 0.930 $\pm$ 0.014 \\
+ & Dark phototype & 46 & 0.726 $\pm$ 0.033 & 0.820 $\pm$ 0.045 & 0.514 $\pm$ 0.078 & 0.904 $\pm$ 0.036 & 0.629 $\pm$ 0.065 & 0.802 $\pm$ 0.042 & 0.799 $\pm$ 0.046 \\
+\addlinespace
+MobileNetV2 & Light phototype & 105 & 0.648 $\pm$ 0.030 & 0.920 $\pm$ 0.024 & 0.569 $\pm$ 0.036 & 0.864 $\pm$ 0.039 & 0.703 $\pm$ 0.031 & 0.843 $\pm$ 0.016 & 0.932 $\pm$ 0.010 \\
+ & Dark phototype & 46 & 0.604 $\pm$ 0.058 & 0.568 $\pm$ 0.064 & 0.581 $\pm$ 0.052 & 0.624 $\pm$ 0.083 & 0.573 $\pm$ 0.054 & 0.662 $\pm$ 0.026 & 0.697 $\pm$ 0.033 \\
+\addlinespace
+EfficientNetV2B0 & Light phototype & 105 & 0.752 $\pm$ 0.029 & 0.938 $\pm$ 0.013 & 0.709 $\pm$ 0.045 & 0.871 $\pm$ 0.032 & 0.807 $\pm$ 0.029 & 0.890 $\pm$ 0.007 & 0.951 $\pm$ 0.008 \\
+ & Dark phototype & 46 & 0.726 $\pm$ 0.033 & 0.766 $\pm$ 0.058 & 0.581 $\pm$ 0.040 & 0.848 $\pm$ 0.052 & 0.660 $\pm$ 0.037 & 0.770 $\pm$ 0.011 & 0.786 $\pm$ 0.012 \\
+\addlinespace
+VGG16 & Light phototype & 105 & 0.629 $\pm$ 0.026 & 0.920 $\pm$ 0.019 & 0.541 $\pm$ 0.039 & 0.869 $\pm$ 0.037 & 0.681 $\pm$ 0.032 & 0.800 $\pm$ 0.029 & 0.920 $\pm$ 0.009 \\
+ & Dark phototype & 46 & 0.703 $\pm$ 0.030 & 0.761 $\pm$ 0.035 & 0.508 $\pm$ 0.058 & 0.867 $\pm$ 0.021 & 0.608 $\pm$ 0.050 & 0.790 $\pm$ 0.013 & 0.767 $\pm$ 0.035 \\
+\addlinespace
+\bottomrule
+\end{tabular}
+\begin{flushleft}
+\footnotesize
+Notes: Values are reported as mean $\pm$ standard deviation across five independently trained model replicas. Subgroup performance was estimated on the BOSQUE external target ORP using the available phototype grouping. The subgroup sample size $n$ refers to the number of BOSQUE images in each target subgroup.
+\end{flushleft}
+\end{table}
