@@ -5,8 +5,8 @@ Primary,recall,BOSQUE light,inconclusive,18
 Primary,recall,BOSQUE light,not adequate and not transported,7
 Primary,recall,BOSQUE dark,inconclusive,18
 Primary,recall,BOSQUE dark,not adequate and not transported,7
-Primary,auc_pr,BOSQUE overall,inconclusive,16
-Primary,auc_pr,BOSQUE overall,adequate and transported,9
+Primary,auc_pr,BOSQUE overall,inconclusive,15
+Primary,auc_pr,BOSQUE overall,adequate and transported,10
 Primary,auc_pr,BOSQUE light,adequate and transported,22
 Primary,auc_pr,BOSQUE light,inconclusive,3
 Primary,auc_pr,BOSQUE dark,inconclusive,25
@@ -22,8 +22,8 @@ Primary,precision,BOSQUE light,adequate and transported,24
 Primary,precision,BOSQUE light,inconclusive,1
 Primary,precision,BOSQUE dark,inconclusive,24
 Primary,precision,BOSQUE dark,adequate and transported,1
-Secondary,accuracy,BOSQUE overall,not adequate and not transported,20
-Secondary,accuracy,BOSQUE overall,inconclusive,5
+Secondary,accuracy,BOSQUE overall,not adequate and not transported,19
+Secondary,accuracy,BOSQUE overall,inconclusive,6
 Secondary,accuracy,BOSQUE light,not adequate and not transported,19
 Secondary,accuracy,BOSQUE light,inconclusive,6
 Secondary,accuracy,BOSQUE dark,inconclusive,19
@@ -39,5 +39,5 @@ Secondary,auc_roc,BOSQUE overall,inconclusive,19
 Secondary,auc_roc,BOSQUE overall,not adequate and not transported,6
 Secondary,auc_roc,BOSQUE light,inconclusive,24
 Secondary,auc_roc,BOSQUE light,not adequate and not transported,1
-Secondary,auc_roc,BOSQUE dark,inconclusive,21
-Secondary,auc_roc,BOSQUE dark,not adequate and not transported,4
+Secondary,auc_roc,BOSQUE dark,inconclusive,20
+Secondary,auc_roc,BOSQUE dark,not adequate and not transported,5

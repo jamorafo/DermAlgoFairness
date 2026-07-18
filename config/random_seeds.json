@@ -1,0 +1,19 @@
+{
+  "policy_version": "1.0",
+  "master_seed": 104729,
+  "derivation": "numpy.random.SeedSequence(master_seed).spawn in the listed analysis order; one uint32 value generated per child",
+  "training_seeds": [1, 2, 3, 4, 5],
+  "analysis_order": [
+    "primary_interval_bootstrap",
+    "seed_aware_subgroup_gap",
+    "architecture_level_bh"
+  ],
+  "analysis_seeds": {
+    "primary_interval_bootstrap": 1517787898,
+    "seed_aware_subgroup_gap": 3484139151,
+    "architecture_level_bh": 2729206535
+  },
+  "historical_runs": {
+    "pre_policy_bootstrap_seed": 20260716
+  }
+}

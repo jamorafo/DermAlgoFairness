@@ -2,7 +2,7 @@ Metric group,Metric,Target condition,Adequate and preserved,Inconclusive,Not ade
 Primary,Recall / sensitivity,Overall,0,16,9,0,0,0,25
 Primary,Recall / sensitivity,Light phototype,0,18,7,0,0,0,25
 Primary,Recall / sensitivity,Dark phototype,0,18,7,0,0,0,25
-Primary,AUC-PR,Overall,9,16,0,0,0,0,25
+Primary,AUC-PR,Overall,10,15,0,0,0,0,25
 Primary,AUC-PR,Light phototype,22,3,0,0,0,0,25
 Primary,AUC-PR,Dark phototype,0,25,0,0,0,0,25
 Primary,F1-score,Overall,2,23,0,0,0,0,25
@@ -11,7 +11,7 @@ Primary,F1-score,Dark phototype,0,24,1,0,0,0,25
 Primary,Precision,Overall,15,10,0,0,0,0,25
 Primary,Precision,Light phototype,24,1,0,0,0,0,25
 Primary,Precision,Dark phototype,1,24,0,0,0,0,25
-Secondary,Accuracy,Overall,0,5,20,0,0,0,25
+Secondary,Accuracy,Overall,0,6,19,0,0,0,25
 Secondary,Accuracy,Light phototype,0,6,19,0,0,0,25
 Secondary,Accuracy,Dark phototype,0,19,6,0,0,0,25
 Secondary,Specificity,Overall,1,24,0,0,0,0,25
@@ -19,4 +19,4 @@ Secondary,Specificity,Light phototype,1,24,0,0,0,0,25
 Secondary,Specificity,Dark phototype,1,22,2,0,0,0,25
 Secondary,AUC-ROC,Overall,0,19,6,0,0,0,25
 Secondary,AUC-ROC,Light phototype,0,24,1,0,0,0,25
-Secondary,AUC-ROC,Dark phototype,0,21,4,0,0,0,25
+Secondary,AUC-ROC,Dark phototype,0,20,5,0,0,0,25
