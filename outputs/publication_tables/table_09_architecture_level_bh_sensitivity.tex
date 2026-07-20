@@ -1,0 +1,42 @@
+\begin{table}[h!]
+\centering
+\scriptsize
+\caption{Architecture-level multiplicity-adjusted BOSQUE light--dark subgroup sensitivity analysis.}
+\label{tab:architecture-bh-sensitivity}
+\setlength{\tabcolsep}{3.3pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabular}{llrrrrrrl}
+\toprule
+\textbf{Metric} & \textbf{Architecture} & \textbf{Mean gap} & \textbf{SD seeds} & \textbf{95\% CI} & \textbf{$p$} & \textbf{$p_{\mathrm{BH}}$} & \textbf{$p_{\mathrm{BY}}$} & \textbf{BH $<0.05$} \\
+\midrule
+Recall / sensitivity & ResNet50 & 0.156 & 0.050 & [-0.062, 0.367] & 0.1583 & 0.2261 & 0.8135 & No \\
+ & DenseNet121 & 0.091 & 0.052 & [-0.117, 0.295] & 0.3933 & 0.4370 & 1.0000 & No \\
+ & MobileNetV2 & -0.012 & 0.042 & [-0.228, 0.208] & 0.9101 & 0.9101 & 1.0000 & No \\
+ & EfficientNetV2B0 & 0.128 & 0.068 & [-0.085, 0.346] & 0.2485 & 0.3106 & 1.0000 & No \\
+ & VGG16 & 0.040 & 0.036 & [-0.135, 0.218] & 0.6633 & 0.6982 & 1.0000 & No \\
+\addlinespace
+AUC-PR & ResNet50 & 0.185 & 0.024 & [0.047, 0.360] & 0.0220 & 0.1467 & 0.5276 & No \\
+ & DenseNet121 & 0.131 & 0.038 & [-0.006, 0.295] & 0.0841 & 0.2146 & 0.7722 & No \\
+ & MobileNetV2 & 0.235 & 0.040 & [0.073, 0.420] & 0.0097 & 0.0970 & 0.3489 & No \\
+ & EfficientNetV2B0 & 0.165 & 0.014 & [0.032, 0.336] & 0.0345 & 0.1725 & 0.6205 & No \\
+ & VGG16 & 0.159 & 0.032 & [0.011, 0.330] & 0.0472 & 0.1888 & 0.6792 & No \\
+\addlinespace
+F1-score & ResNet50 & 0.173 & 0.042 & [-0.012, 0.395] & 0.0966 & 0.2146 & 0.7722 & No \\
+ & DenseNet121 & 0.108 & 0.052 & [-0.061, 0.306] & 0.2412 & 0.3106 & 1.0000 & No \\
+ & MobileNetV2 & 0.129 & 0.051 & [-0.037, 0.325] & 0.1541 & 0.2261 & 0.8135 & No \\
+ & EfficientNetV2B0 & 0.148 & 0.055 & [-0.014, 0.347] & 0.1083 & 0.2166 & 0.7792 & No \\
+ & VGG16 & 0.079 & 0.033 & [-0.071, 0.255] & 0.3448 & 0.4056 & 1.0000 & No \\
+\addlinespace
+Precision & ResNet50 & 0.161 & 0.128 & [-0.002, 0.356] & 0.0755 & 0.2146 & 0.7722 & No \\
+ & DenseNet121 & 0.132 & 0.051 & [-0.028, 0.341] & 0.1568 & 0.2261 & 0.8135 & No \\
+ & MobileNetV2 & 0.352 & 0.077 & [0.159, 0.559] & 0.0008 & 0.0160 & 0.0576 & Yes \\
+ & EfficientNetV2B0 & 0.173 & 0.049 & [-0.013, 0.398] & 0.0948 & 0.2146 & 0.7722 & No \\
+ & VGG16 & 0.167 & 0.049 & [-0.031, 0.394] & 0.1252 & 0.2261 & 0.8135 & No \\
+\addlinespace
+\bottomrule
+\end{tabular}
+\begin{flushleft}
+\footnotesize
+Notes: The architecture-level estimand is the mean light-minus-dark performance gap across the five locked seed-specific systems. Positive values indicate higher performance in the light-phototype group. BOSQUE light and dark images were resampled separately; within each bootstrap replicate, the same sampled image indices were applied to all 25 systems. The 95\% intervals are percentile-bootstrap intervals. Two-sided $p$-values were obtained from the null-centred bootstrap distribution. Benjamini--Hochberg adjustment was applied to the prespecified family of 20 architecture--primary-metric tests. Benjamini--Yekutieli adjusted values are reported as a conservative dependence sensitivity analysis. Inference is conditional on the five observed training seeds and on image-level independence within the BOSQUE ORP. This secondary analysis does not replace the locked-system TAC, ETC, benchmark-preservation, or interval results.
+\end{flushleft}
+\end{table}
