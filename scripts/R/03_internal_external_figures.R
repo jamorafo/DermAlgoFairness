@@ -192,10 +192,17 @@ make_source_target_plot <- function(metric_name, specification) {
 
   ggplot() +
     geom_vline(
-      xintercept = threshold_values,
-      aes(linetype = "Target adequacy threshold"),
+      data = data.frame(
+        threshold = threshold_values,
+        legend = "Target adequacy threshold"
+      ),
+      aes(
+        xintercept = threshold,
+        linetype = legend
+      ),
       linewidth = 0.65,
-      colour = "grey25"
+      colour = "grey25",
+      show.legend = TRUE
     ) +
     geom_segment(
       data = plot_data,
@@ -258,10 +265,7 @@ make_source_target_plot <- function(metric_name, specification) {
         order = 1,
         override.aes = list(size = 3)
       ),
-      shape = guide_legend(
-        order = 1,
-        override.aes = list(size = 3)
-      ),
+      shape = "none",
       linetype = guide_legend(order = 2)
     ) +
     theme_publication(base_size = 11) +
