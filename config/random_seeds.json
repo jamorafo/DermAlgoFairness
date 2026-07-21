@@ -1,19 +1,40 @@
 {
-  "policy_version": "1.0",
+  "policy_version": "2.0",
   "master_seed": 104729,
-  "derivation": "numpy.random.SeedSequence(master_seed).spawn in the listed analysis order; one uint32 value generated per child",
-  "training_seeds": [1, 2, 3, 4, 5],
-  "analysis_order": [
+  "derivation": "numpy.random.SeedSequence(master_seed).spawn in derivation_order; one uint32 value generated per child",
+  "derivation_order": [
     "primary_interval_bootstrap",
     "seed_aware_subgroup_gap",
-    "architecture_level_bh"
+    "architecture_level_bh",
+    "fixed_ham10000_split",
+    "training_run_1",
+    "training_run_2",
+    "training_run_3",
+    "training_run_4",
+    "training_run_5"
+  ],
+  "derived_seeds": {
+    "primary_interval_bootstrap": 1517787898,
+    "seed_aware_subgroup_gap": 3484139151,
+    "architecture_level_bh": 2729206535,
+    "fixed_ham10000_split": 3285767666,
+    "training_run_1": 347535239,
+    "training_run_2": 1431725881,
+    "training_run_3": 3368960919,
+    "training_run_4": 4236551057,
+    "training_run_5": 780568470
+  },
+  "fixed_split_seed": 3285767666,
+  "training_seeds": [
+    347535239,
+    1431725881,
+    3368960919,
+    4236551057,
+    780568470
   ],
   "analysis_seeds": {
     "primary_interval_bootstrap": 1517787898,
     "seed_aware_subgroup_gap": 3484139151,
     "architecture_level_bh": 2729206535
-  },
-  "historical_runs": {
-    "pre_policy_bootstrap_seed": 20260716
   }
 }

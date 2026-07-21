@@ -31,6 +31,8 @@ import warnings
 import numpy as np
 import pandas as pd
 
+from dermalgo.seeds import get_analysis_seed, get_training_seeds
+
 from sklearn.metrics import (
     accuracy_score,
     precision_score,
@@ -108,8 +110,34 @@ METRIC_CONFIG = {
 }
 
 N_BOOT = 10000
-RANDOM_STATE = 1517787898
+TRAINING_SEEDS = get_training_seeds()
+RANDOM_STATE = get_analysis_seed("primary_interval_bootstrap")
 THRESHOLD = 0.5
+
+SOURCE_SPLIT_MANIFEST = (
+    ROOT / "splits" / "ham10000_lesion_grouped_fixed.csv"
+)
+
+if not SOURCE_SPLIT_MANIFEST.exists():
+    raise FileNotFoundError(
+        f"Missing fixed source split manifest: {SOURCE_SPLIT_MANIFEST}"
+    )
+
+_source_split_frame = pd.read_csv(
+    SOURCE_SPLIT_MANIFEST,
+    usecols=["split"],
+)
+
+SOURCE_EXPECTED_N = int(
+    (
+        _source_split_frame["split"]
+        .astype(str)
+        .str.strip()
+        .str.lower()
+        == "test"
+    ).sum()
+)
+
 
 MODEL_ORDER = [
     "ResNet50",
@@ -183,7 +211,7 @@ def discover_prediction_files():
     expected_pairs = {
         (model, seed)
         for model in MODEL_ORDER
-        for seed in range(1, 6)
+        for seed in TRAINING_SEEDS
     }
 
     timestamp_re = re.compile(r"_(\d{8}T\d{6}Z)\.csv$")
@@ -293,7 +321,7 @@ def discover_prediction_files():
     source_map, source_manifest = latest_file_map(
         pattern="ham10000_internal_test_predictions_*_seed*.csv",
         label="HAM10000 internal test",
-        expected_n=1002,
+        expected_n=SOURCE_EXPECTED_N,
         require_skin_group=False,
     )
 

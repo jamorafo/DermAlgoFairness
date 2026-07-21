@@ -37,6 +37,8 @@ import argparse
 import numpy as np
 import pandas as pd
 
+from dermalgo.seeds import get_analysis_seed, get_training_seeds
+
 from sklearn.metrics import (
     average_precision_score,
     f1_score,
@@ -74,7 +76,7 @@ MODEL_LABELS = {
     "vgg16": "VGG16",
 }
 
-SEEDS = [1, 2, 3, 4, 5]
+SEEDS = get_training_seeds()
 
 PRIMARY_METRICS = [
     "recall",
@@ -684,7 +686,7 @@ def main():
     parser.add_argument(
         "--seed",
         type=int,
-        default=20260716,
+        default=get_analysis_seed("architecture_level_bh"),
     )
 
     parser.add_argument(
