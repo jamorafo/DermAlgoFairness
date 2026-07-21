@@ -24,6 +24,8 @@ import re
 import numpy as np
 import pandas as pd
 
+from dermalgo.seeds import get_analysis_seed, get_training_seeds
+
 from sklearn.metrics import (
     accuracy_score,
     average_precision_score,
@@ -76,12 +78,12 @@ PRIMARY_METRICS = {
     "precision",
 }
 
-EXPECTED_SEEDS = set(range(1, 6))
+EXPECTED_SEEDS = set(get_training_seeds())
 
 FILE_RE = re.compile(
     r"^bosque_public_predictions_"
     r"(resnet50|densenet121|mobilenetv2|efficientnetv2b0|vgg16)"
-    r"_seed([1-5])_(\d{8}T\d{6}Z)\.csv$"
+    r"_seed(\d+)_(\d{8}T\d{6}Z)\.csv$"
 )
 
 
@@ -513,7 +515,7 @@ def main():
     parser.add_argument(
         "--seed",
         type=int,
-        default=20260716,
+        default=get_analysis_seed("seed_aware_subgroup_gap"),
     )
 
     args = parser.parse_args()

@@ -33,4 +33,4 @@ dry-run-resnet50:
 		--shm-size=4g \
 		-v $(HOME)/DermAlgoFairness:$(PROJECT_DIR) \
 		$(IMAGE_NAME) \
-		bash -lc "cd $(PROJECT_DIR) && PYTHONPATH=src python3 scripts/03_train_model.py --config configs/resnet50.yaml --seed 1 --dry-run"
+		bash -lc "cd $(PROJECT_DIR) && PYTHONPATH=src python3 scripts/03_train_model.py --config configs/resnet50.yaml --seed 347535239 --dry-run"
