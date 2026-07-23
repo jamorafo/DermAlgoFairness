@@ -5,7 +5,9 @@
 Interval-based TAC/ETC analysis for image-based diagnostic AI.
 
 This script implements a Chapter-5-consistent TAC/ETC analysis using
-prediction-level files rather than summary means.
+prediction-level files rather than summary means. Source uncertainty is
+estimated by resampling HAM10000 lesions as clusters, while BOSQUE is
+resampled at the image level because it contains one image per lesion.
 
 It estimates, for each locked model replica f_{a,s}:
 
@@ -193,20 +195,100 @@ def parse_model_seed(path):
 
 def discover_prediction_files():
     """
-    Discover one canonical source and target prediction file per model--seed pair.
+    Select the exact source and target prediction files recorded in the
+    verified evaluation matrix.
 
-    Primary source:
-      ham10000_internal_test_predictions_*.csv
-
-    Primary target:
-      bosque_public_predictions_*.csv
-
-    Whole-HAM10000 predictions are deliberately excluded from the primary
-    source-to-target TAC/ETC analysis.
-
-    When duplicate files exist for the same model--seed pair, the file with the
-    latest timestamp in its filename is selected.
+    Historical prediction files remain preserved but are excluded unless
+    explicitly listed in the evaluation-status manifest.
     """
+
+    status_path = (
+        ROOT
+        / "outputs"
+        / "logs"
+        / "evaluation_matrix_status_3a403f3.tsv"
+    )
+
+    if not status_path.exists():
+        raise FileNotFoundError(
+            "Missing verified evaluation-status manifest: "
+            f"{status_path}"
+        )
+
+    status = pd.read_csv(
+        status_path,
+        sep="\t",
+    )
+
+    required_status_columns = {
+        "architecture",
+        "seed",
+        "evaluation_status",
+        "evaluation_run_id",
+    }
+
+    missing = (
+        required_status_columns
+        - set(status.columns)
+    )
+
+    if missing:
+        raise ValueError(
+            "The evaluation-status manifest is missing columns: "
+            f"{sorted(missing)}"
+        )
+
+    if len(status) != 25:
+        raise RuntimeError(
+            "Expected 25 verified evaluation records, "
+            f"found {len(status)}."
+        )
+
+    status = status.copy()
+
+    status["architecture"] = (
+        status["architecture"]
+        .astype(str)
+        .str.strip()
+        .str.lower()
+    )
+
+    status["model"] = (
+        status["architecture"]
+        .map(normalize_model)
+    )
+
+    status["seed"] = (
+        status["seed"]
+        .astype(int)
+    )
+
+    status["evaluation_run_id"] = (
+        status["evaluation_run_id"]
+        .astype(str)
+        .str.strip()
+    )
+
+    if status[
+        ["model", "seed"]
+    ].duplicated().any():
+        raise RuntimeError(
+            "Duplicate model--seed rows were found in "
+            "the evaluation-status manifest."
+        )
+
+    allowed_statuses = {
+        "evaluated_and_verified",
+        "already_verified",
+    }
+
+    if not set(
+        status["evaluation_status"]
+    ).issubset(allowed_statuses):
+        raise RuntimeError(
+            "The evaluation-status manifest contains an "
+            "unverified evaluation status."
+        )
 
     expected_pairs = {
         (model, seed)
@@ -214,149 +296,348 @@ def discover_prediction_files():
         for seed in TRAINING_SEEDS
     }
 
-    timestamp_re = re.compile(r"_(\d{8}T\d{6}Z)\.csv$")
-
-    def latest_file_map(pattern, label, expected_n, require_skin_group=False):
-        grouped = {}
-
-        for path in sorted(PRED_DIR.glob(pattern)):
-            model, seed = parse_model_seed(path)
-
-            if model is None or seed is None:
-                warnings.warn(f"Could not parse {label} file: {path}")
-                continue
-
-            timestamp_match = timestamp_re.search(path.name)
-            if timestamp_match is None:
-                warnings.warn(f"Could not parse timestamp from {path.name}")
-                continue
-
-            timestamp = timestamp_match.group(1)
-            key = (model, seed)
-
-            grouped.setdefault(key, []).append(
-                {
-                    "timestamp": timestamp,
-                    "path": path,
-                }
-            )
-
-        selected = {}
-        manifest_rows = []
-
-        for key, candidates in sorted(grouped.items()):
-            latest = max(
-                candidates,
-                key=lambda item: item["timestamp"],
-            )
-
-            path = latest["path"]
-            df = pd.read_csv(path)
-
-            required = {"y_true", "y_score"}
-            if require_skin_group:
-                required.add("skin_group")
-
-            missing = required - set(df.columns)
-
-            if missing:
-                raise ValueError(
-                    f"{path} is missing required columns: {sorted(missing)}"
-                )
-
-            if len(df) != expected_n:
-                raise ValueError(
-                    f"{path} contains {len(df)} rows; expected {expected_n}."
-                )
-
-            if df["y_true"].isna().any():
-                raise ValueError(f"{path} contains missing y_true values.")
-
-            if df["y_score"].isna().any():
-                raise ValueError(f"{path} contains missing y_score values.")
-
-            selected[key] = path
-
-            y_true = pd.to_numeric(
-                df["y_true"],
-                errors="raise",
-            ).astype(int)
-
-            manifest_rows.append(
-                {
-                    "dataset": label,
-                    "model": key[0],
-                    "seed": key[1],
-                    "timestamp": latest["timestamp"],
-                    "n": len(df),
-                    "n_negative": int((y_true == 0).sum()),
-                    "n_positive": int((y_true == 1).sum()),
-                    "prediction_file": str(path.relative_to(ROOT)),
-                    "n_duplicate_candidates": len(candidates),
-                }
-            )
-
-        found_pairs = set(selected)
-        missing_pairs = expected_pairs - found_pairs
-        unexpected_pairs = found_pairs - expected_pairs
-
-        if missing_pairs:
-            raise RuntimeError(
-                f"Missing {label} model--seed pairs: {sorted(missing_pairs)}"
-            )
-
-        if unexpected_pairs:
-            raise RuntimeError(
-                f"Unexpected {label} model--seed pairs: "
-                f"{sorted(unexpected_pairs)}"
-            )
-
-        if len(selected) != 25:
-            raise RuntimeError(
-                f"Expected 25 canonical {label} files, found {len(selected)}."
-            )
-
-        return selected, manifest_rows
-
-    source_map, source_manifest = latest_file_map(
-        pattern="ham10000_internal_test_predictions_*_seed*.csv",
-        label="HAM10000 internal test",
-        expected_n=SOURCE_EXPECTED_N,
-        require_skin_group=False,
+    observed_pairs = set(
+        zip(
+            status["model"],
+            status["seed"],
+        )
     )
 
-    target_map, target_manifest = latest_file_map(
-        pattern="bosque_public_predictions_*_seed*.csv",
-        label="BOSQUE external",
-        expected_n=151,
-        require_skin_group=True,
-    )
-
-    common = sorted(set(source_map).intersection(target_map))
-
-    if set(common) != expected_pairs:
+    if observed_pairs != expected_pairs:
         raise RuntimeError(
-            "The matched source--target pairs do not equal the expected "
-            "5 architectures x 5 seeds."
+            "The verified evaluation matrix does not match "
+            "the expected 5 architectures x 5 seeds."
         )
 
-    manifest = pd.DataFrame(source_manifest + target_manifest)
-    manifest = manifest.sort_values(
-        ["dataset", "model", "seed"]
-    ).reset_index(drop=True)
+    source_map = {}
+    target_map = {}
+    manifest_rows = []
 
-    logs_dir = ROOT / "outputs" / "logs"
-    logs_dir.mkdir(parents=True, exist_ok=True)
+    def validate_prediction_file(
+        prediction_path,
+        dataset_label,
+        expected_n,
+        require_lesion_id=False,
+        require_skin_group=False,
+    ):
+        if (
+            not prediction_path.exists()
+            or prediction_path.stat().st_size == 0
+        ):
+            raise FileNotFoundError(
+                f"Missing prediction file: {prediction_path}"
+            )
 
-    manifest_path = logs_dir / "primary_prediction_manifest.csv"
-    manifest.to_csv(manifest_path, index=False)
+        frame = pd.read_csv(
+            prediction_path
+        )
 
-    print(f"Canonical source prediction files: {len(source_map)}")
-    print(f"Canonical target prediction files: {len(target_map)}")
-    print(f"Matched model--seed pairs: {len(common)}")
-    print(f"Saved canonical input manifest: {manifest_path}")
+        required = {
+            "y_true",
+            "y_score",
+        }
 
-    return source_map, target_map, common
+        if require_lesion_id:
+            required.add("lesion_id")
+
+        if require_skin_group:
+            required.add("skin_group")
+
+        missing_columns = (
+            required - set(frame.columns)
+        )
+
+        if missing_columns:
+            raise ValueError(
+                f"{prediction_path} is missing columns: "
+                f"{sorted(missing_columns)}"
+            )
+
+        if len(frame) != expected_n:
+            raise ValueError(
+                f"{prediction_path} contains {len(frame)} rows; "
+                f"expected {expected_n}."
+            )
+
+        if frame[
+            ["y_true", "y_score"]
+        ].isna().any().any():
+            raise ValueError(
+                f"{prediction_path} contains missing "
+                "outcomes or scores."
+            )
+
+        y_true = pd.to_numeric(
+            frame["y_true"],
+            errors="raise",
+        ).astype(int)
+
+        if not set(
+            y_true.unique()
+        ).issubset({0, 1}):
+            raise ValueError(
+                f"{prediction_path} contains non-binary outcomes."
+            )
+
+        if require_lesion_id:
+            if frame["lesion_id"].isna().any():
+                raise ValueError(
+                    f"{prediction_path} contains missing lesion IDs."
+                )
+
+            if frame["lesion_id"].nunique() != 747:
+                raise ValueError(
+                    f"{prediction_path} contains "
+                    f"{frame['lesion_id'].nunique()} lesions; "
+                    "expected 747."
+                )
+
+        if require_skin_group:
+            skin_counts = (
+                frame["skin_group"]
+                .astype(str)
+                .str.strip()
+                .str.lower()
+                .value_counts()
+                .to_dict()
+            )
+
+            if skin_counts != {
+                "light": 105,
+                "dark": 46,
+            }:
+                raise ValueError(
+                    f"{prediction_path} has unexpected "
+                    f"skin-group counts: {skin_counts}"
+                )
+
+        return frame, y_true
+
+    for row in status.itertuples(index=False):
+        architecture = str(
+            row.architecture
+        )
+
+        model = str(
+            row.model
+        )
+
+        seed = int(
+            row.seed
+        )
+
+        evaluation_run_id = str(
+            row.evaluation_run_id
+        )
+
+        expected_prefix = (
+            f"{architecture}_seed{seed}_"
+        )
+
+        if not evaluation_run_id.startswith(
+            expected_prefix
+        ):
+            raise RuntimeError(
+                "Evaluation run-ID mismatch for "
+                f"{architecture}, seed {seed}: "
+                f"{evaluation_run_id}"
+            )
+
+        source_path = (
+            PRED_DIR
+            / (
+                "ham10000_internal_test_predictions_"
+                f"{evaluation_run_id}.csv"
+            )
+        )
+
+        target_path = (
+            PRED_DIR
+            / (
+                "bosque_public_predictions_"
+                f"{evaluation_run_id}.csv"
+            )
+        )
+
+        source_frame, source_y = (
+            validate_prediction_file(
+                source_path,
+                dataset_label="HAM10000 internal test",
+                expected_n=SOURCE_EXPECTED_N,
+                require_lesion_id=True,
+            )
+        )
+
+        target_frame, target_y = (
+            validate_prediction_file(
+                target_path,
+                dataset_label="BOSQUE external",
+                expected_n=151,
+                require_skin_group=True,
+            )
+        )
+
+        key = (
+            model,
+            seed,
+        )
+
+        source_map[key] = source_path
+        target_map[key] = target_path
+
+        timestamp = (
+            evaluation_run_id
+            .rsplit("_", maxsplit=1)[-1]
+        )
+
+        source_candidates = list(
+            PRED_DIR.glob(
+                "ham10000_internal_test_predictions_"
+                f"{architecture}_seed{seed}_*.csv"
+            )
+        )
+
+        target_candidates = list(
+            PRED_DIR.glob(
+                "bosque_public_predictions_"
+                f"{architecture}_seed{seed}_*.csv"
+            )
+        )
+
+        manifest_rows.extend(
+            [
+                {
+                    "dataset": "HAM10000 internal test",
+                    "model": model,
+                    "seed": seed,
+                    "timestamp": timestamp,
+                    "evaluation_run_id": evaluation_run_id,
+                    "n": len(source_frame),
+                    "n_clusters": (
+                        source_frame["lesion_id"].nunique()
+                    ),
+                    "n_negative": int(
+                        (source_y == 0).sum()
+                    ),
+                    "n_positive": int(
+                        (source_y == 1).sum()
+                    ),
+                    "prediction_file": str(
+                        source_path.relative_to(ROOT)
+                    ),
+                    "n_duplicate_candidates": len(
+                        source_candidates
+                    ),
+                    "selection_source": str(
+                        status_path.relative_to(ROOT)
+                    ),
+                },
+                {
+                    "dataset": "BOSQUE external",
+                    "model": model,
+                    "seed": seed,
+                    "timestamp": timestamp,
+                    "evaluation_run_id": evaluation_run_id,
+                    "n": len(target_frame),
+                    "n_clusters": len(target_frame),
+                    "n_negative": int(
+                        (target_y == 0).sum()
+                    ),
+                    "n_positive": int(
+                        (target_y == 1).sum()
+                    ),
+                    "prediction_file": str(
+                        target_path.relative_to(ROOT)
+                    ),
+                    "n_duplicate_candidates": len(
+                        target_candidates
+                    ),
+                    "selection_source": str(
+                        status_path.relative_to(ROOT)
+                    ),
+                },
+            ]
+        )
+
+    model_index = {
+        model: index
+        for index, model in enumerate(MODEL_ORDER)
+    }
+
+    seed_index = {
+        seed: index
+        for index, seed in enumerate(TRAINING_SEEDS)
+    }
+
+    pairs = sorted(
+        expected_pairs,
+        key=lambda item: (
+            model_index[item[0]],
+            seed_index[item[1]],
+        ),
+    )
+
+    if len(source_map) != 25:
+        raise RuntimeError(
+            f"Expected 25 source files, found {len(source_map)}."
+        )
+
+    if len(target_map) != 25:
+        raise RuntimeError(
+            f"Expected 25 target files, found {len(target_map)}."
+        )
+
+    manifest = (
+        pd.DataFrame(manifest_rows)
+        .sort_values(
+            [
+                "dataset",
+                "model",
+                "seed",
+            ]
+        )
+        .reset_index(drop=True)
+    )
+
+    logs_dir = (
+        ROOT
+        / "outputs"
+        / "logs"
+    )
+
+    logs_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    manifest_path = (
+        logs_dir
+        / "primary_prediction_manifest.csv"
+    )
+
+    manifest.to_csv(
+        manifest_path,
+        index=False,
+    )
+
+    print(
+        f"Canonical source prediction files: {len(source_map)}"
+    )
+    print(
+        f"Canonical target prediction files: {len(target_map)}"
+    )
+    print(
+        f"Matched model--seed pairs: {len(pairs)}"
+    )
+    print(
+        f"Saved canonical input manifest: {manifest_path}"
+    )
+
+    return (
+        source_map,
+        target_map,
+        pairs,
+    )
 
 
 def read_predictions(path):
@@ -378,39 +659,147 @@ def read_predictions(path):
     return df
 
 
-def metric_value(y_true, y_score, metric):
-    y_true = np.asarray(y_true).astype(int)
-    y_score = np.asarray(y_score).astype(float)
-    y_pred = (y_score >= THRESHOLD).astype(int)
+def metric_value(
+    y_true,
+    y_score,
+    metric,
+    sample_weight=None,
+):
+    """
+    Compute one performance metric.
 
-    if metric in {"auc_roc", "auc_pr"}:
-        if len(np.unique(y_true)) < 2:
+    Bootstrap frequency weights are equivalent to explicitly duplicating
+    sampled observations or sampled lesion clusters.
+    """
+
+    y_true = np.asarray(
+        y_true,
+    ).astype(int)
+
+    y_score = np.asarray(
+        y_score,
+    ).astype(float)
+
+    if sample_weight is None:
+        weight = None
+        observed_y = y_true
+    else:
+        weight = np.asarray(
+            sample_weight,
+            dtype=float,
+        )
+
+        if weight.shape != y_true.shape:
+            raise ValueError(
+                "sample_weight must have the same shape "
+                "as y_true."
+            )
+
+        if (
+            not np.isfinite(weight).all()
+            or (weight < 0).any()
+        ):
+            raise ValueError(
+                "sample_weight contains invalid values."
+            )
+
+        observed_y = y_true[
+            weight > 0
+        ]
+
+    if observed_y.size == 0:
+        return np.nan
+
+    y_pred = (
+        y_score >= THRESHOLD
+    ).astype(int)
+
+    if metric in {
+        "auc_roc",
+        "auc_pr",
+    }:
+        if len(
+            np.unique(observed_y)
+        ) < 2:
             return np.nan
 
     if metric == "accuracy":
-        return accuracy_score(y_true, y_pred)
+        return accuracy_score(
+            y_true,
+            y_pred,
+            sample_weight=weight,
+        )
 
     if metric == "precision":
-        return precision_score(y_true, y_pred, zero_division=0)
+        return precision_score(
+            y_true,
+            y_pred,
+            sample_weight=weight,
+            zero_division=0,
+        )
 
     if metric == "recall":
-        return recall_score(y_true, y_pred, zero_division=0)
+        return recall_score(
+            y_true,
+            y_pred,
+            sample_weight=weight,
+            zero_division=0,
+        )
 
     if metric == "specificity":
-        tn = ((y_true == 0) & (y_pred == 0)).sum()
-        fp = ((y_true == 0) & (y_pred == 1)).sum()
-        return np.nan if (tn + fp) == 0 else tn / (tn + fp)
+        if weight is None:
+            working_weight = np.ones(
+                len(y_true),
+                dtype=float,
+            )
+        else:
+            working_weight = weight
+
+        negative = (
+            y_true == 0
+        )
+
+        tn = working_weight[
+            negative
+            & (y_pred == 0)
+        ].sum()
+
+        fp = working_weight[
+            negative
+            & (y_pred == 1)
+        ].sum()
+
+        return (
+            np.nan
+            if (tn + fp) == 0
+            else tn / (tn + fp)
+        )
 
     if metric == "f1":
-        return f1_score(y_true, y_pred, zero_division=0)
+        return f1_score(
+            y_true,
+            y_pred,
+            sample_weight=weight,
+            zero_division=0,
+        )
 
     if metric == "auc_roc":
-        return roc_auc_score(y_true, y_score)
+        return roc_auc_score(
+            y_true,
+            y_score,
+            sample_weight=weight,
+        )
 
     if metric == "auc_pr":
-        return average_precision_score(y_true, y_score)
+        return average_precision_score(
+            y_true,
+            y_score,
+            sample_weight=weight,
+        )
 
-    raise ValueError(f"Unsupported metric: {metric}")
+    raise ValueError(
+        f"Unsupported metric: {metric}"
+    )
 
 
 def percentile_interval(values, alpha=0.05):
@@ -426,38 +815,183 @@ def percentile_interval(values, alpha=0.05):
     )
 
 
-def bootstrap_degradation_interval(source_df, target_df, metric, rng, n_boot=N_BOOT):
+def make_cluster_codes(
+    frame,
+    cluster_column,
+):
+    """
+    Encode the cluster membership of every row as integers 0,...,G-1.
+    """
+
+    if cluster_column not in frame.columns:
+        raise ValueError(
+            f"Missing cluster column: {cluster_column}"
+        )
+
+    if frame[
+        cluster_column
+    ].isna().any():
+        raise ValueError(
+            f"{cluster_column} contains missing values."
+        )
+
+    codes, unique_clusters = pd.factorize(
+        frame[cluster_column],
+        sort=False,
+    )
+
+    if (codes < 0).any():
+        raise RuntimeError(
+            "Invalid cluster codes were generated."
+        )
+
+    n_clusters = int(
+        len(unique_clusters)
+    )
+
+    if n_clusters < 1:
+        raise RuntimeError(
+            "No source clusters were found."
+        )
+
+    return (
+        codes.astype(int),
+        n_clusters,
+    )
+
+
+def bootstrap_degradation_interval(
+    source_df,
+    target_df,
+    metric,
+    rng,
+    source_cluster_codes,
+    n_source_clusters,
+    n_boot=N_BOOT,
+):
+    """
+    Bootstrap source and target performance and their degradation gap.
+
+    HAM10000 lesions are sampled as clusters. Every image belonging to a
+    sampled lesion receives the frequency with which that lesion was drawn.
+    BOSQUE rows are sampled independently because the public target ORP
+    contains one image per lesion.
+    """
+
     ns = len(source_df)
     nt = len(target_df)
 
-    y_s = source_df["y_true"].to_numpy()
-    p_s = source_df["y_score"].to_numpy()
+    if len(
+        source_cluster_codes
+    ) != ns:
+        raise ValueError(
+            "Source cluster codes do not align with source rows."
+        )
 
-    y_t = target_df["y_true"].to_numpy()
-    p_t = target_df["y_score"].to_numpy()
+    if n_source_clusters != len(
+        np.unique(source_cluster_codes)
+    ):
+        raise ValueError(
+            "The source-cluster count is inconsistent "
+            "with the cluster codes."
+        )
+
+    y_s = (
+        source_df["y_true"]
+        .to_numpy(dtype=int)
+    )
+
+    p_s = (
+        source_df["y_score"]
+        .to_numpy(dtype=float)
+    )
+
+    y_t = (
+        target_df["y_true"]
+        .to_numpy(dtype=int)
+    )
+
+    p_t = (
+        target_df["y_score"]
+        .to_numpy(dtype=float)
+    )
 
     deltas = []
     source_vals = []
     target_vals = []
 
     for _ in range(n_boot):
-        idx_s = rng.integers(0, ns, size=ns)
-        idx_t = rng.integers(0, nt, size=nt)
+        sampled_source_clusters = rng.integers(
+            0,
+            n_source_clusters,
+            size=n_source_clusters,
+        )
 
-        theta_s = metric_value(y_s[idx_s], p_s[idx_s], metric)
-        theta_t = metric_value(y_t[idx_t], p_t[idx_t], metric)
+        source_cluster_counts = np.bincount(
+            sampled_source_clusters,
+            minlength=n_source_clusters,
+        )
 
-        if np.isnan(theta_s) or np.isnan(theta_t):
+        source_weights = source_cluster_counts[
+            source_cluster_codes
+        ]
+
+        sampled_target_rows = rng.integers(
+            0,
+            nt,
+            size=nt,
+        )
+
+        target_weights = np.bincount(
+            sampled_target_rows,
+            minlength=nt,
+        )
+
+        theta_s = metric_value(
+            y_s,
+            p_s,
+            metric,
+            sample_weight=source_weights,
+        )
+
+        theta_t = metric_value(
+            y_t,
+            p_t,
+            metric,
+            sample_weight=target_weights,
+        )
+
+        if (
+            np.isnan(theta_s)
+            or np.isnan(theta_t)
+        ):
             continue
 
-        source_vals.append(theta_s)
-        target_vals.append(theta_t)
-        deltas.append(theta_s - theta_t)
+        source_vals.append(
+            theta_s
+        )
+
+        target_vals.append(
+            theta_t
+        )
+
+        deltas.append(
+            theta_s - theta_t
+        )
 
     return (
-        np.asarray(source_vals, dtype=float),
-        np.asarray(target_vals, dtype=float),
-        np.asarray(deltas, dtype=float),
+        np.asarray(
+            source_vals,
+            dtype=float,
+        ),
+        np.asarray(
+            target_vals,
+            dtype=float,
+        ),
+        np.asarray(
+            deltas,
+            dtype=float,
+        ),
     )
 
 
@@ -542,6 +1076,20 @@ def main():
         source_df = read_predictions(source_path)
         target_df = read_predictions(target_path)
 
+        (
+            source_cluster_codes,
+            n_source_clusters,
+        ) = make_cluster_codes(
+            source_df,
+            cluster_column="lesion_id",
+        )
+
+        if n_source_clusters != 747:
+            raise RuntimeError(
+                f"{model} seed {seed}: expected 747 source lesions, "
+                f"found {n_source_clusters}."
+            )
+
         target_subsets = make_target_subsets(target_df)
 
         for metric in METRIC_ORDER:
@@ -563,11 +1111,17 @@ def main():
                     metric,
                 )
 
-                source_boot, target_boot, delta_boot = bootstrap_degradation_interval(
+                (
+                    source_boot,
+                    target_boot,
+                    delta_boot,
+                ) = bootstrap_degradation_interval(
                     source_df=source_df,
                     target_df=target_part,
                     metric=metric,
                     rng=rng,
+                    source_cluster_codes=source_cluster_codes,
+                    n_source_clusters=n_source_clusters,
                     n_boot=N_BOOT,
                 )
 
@@ -589,7 +1143,12 @@ def main():
                         "metric_group": metric_group,
                         "target_condition": target_condition,
                         "n_source": len(source_df),
+                        "n_source_clusters": n_source_clusters,
                         "n_target": len(target_part),
+                        "source_bootstrap_unit": "lesion",
+                        "target_bootstrap_unit": "image_or_lesion",
+                        "n_boot_requested": N_BOOT,
+                        "n_boot_valid": len(delta_boot),
                         "source_performance": theta_s,
                         "source_ci_low": l_source,
                         "source_ci_high": u_source,
