@@ -218,7 +218,7 @@ def build_latex_table(table):
                 r"gives the number of seed-specific 95\% percentile-bootstrap "
                 r"intervals lying entirely above zero, including zero, or "
                 r"lying entirely below zero, respectively. Each interval "
-                r"uses 2000 image-level bootstrap replicates within the "
+                r"uses 10{,}000 image-level bootstrap replicates within the "
                 r"observed BOSQUE light ($n=105$) and dark ($n=46$) ORPs. "
                 r"Intervals are conditional on the locked system and on "
                 r"image-level independence. No $p$-values or multiplicity "

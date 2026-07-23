@@ -24,6 +24,8 @@ import re
 import numpy as np
 import pandas as pd
 
+from dermalgo.seeds import get_analysis_seed, get_training_seeds
+
 from sklearn.metrics import (
     accuracy_score,
     average_precision_score,
@@ -76,12 +78,12 @@ PRIMARY_METRICS = {
     "precision",
 }
 
-EXPECTED_SEEDS = set(range(1, 6))
+EXPECTED_SEEDS = set(get_training_seeds())
 
 FILE_RE = re.compile(
     r"^bosque_public_predictions_"
     r"(resnet50|densenet121|mobilenetv2|efficientnetv2b0|vgg16)"
-    r"_seed([1-5])_(\d{8}T\d{6}Z)\.csv$"
+    r"_seed(\d+)_(\d{8}T\d{6}Z)\.csv$"
 )
 
 
@@ -137,58 +139,167 @@ def compute_metrics(y_true, y_score, threshold=0.5):
 
 def discover_canonical_files():
     """
-    Select the latest timestamped BOSQUE file for every model--seed pair.
+    Select the exact 25 BOSQUE prediction files recorded by the verified
+    evaluation matrix.
+
+    Historical prediction files are retained in the repository outputs but
+    are excluded from the current analysis unless they are explicitly listed
+    in the locked evaluation-status manifest.
     """
 
-    grouped = {}
+    status_path = (
+        LOGS
+        / "evaluation_matrix_status_3a403f3.tsv"
+    )
 
-    for path in sorted(PRED_DIR.glob(
-        "bosque_public_predictions_*_seed*.csv"
-    )):
-        match = FILE_RE.match(path.name)
+    if not status_path.exists():
+        raise FileNotFoundError(
+            "Missing verified evaluation-status manifest: "
+            f"{status_path}"
+        )
 
-        if match is None:
-            continue
+    status = pd.read_csv(
+        status_path,
+        sep="\t",
+    )
 
-        model = match.group(1)
-        seed = int(match.group(2))
-        timestamp = match.group(3)
+    required_columns = {
+        "architecture",
+        "seed",
+        "evaluation_status",
+        "evaluation_run_id",
+    }
 
-        grouped.setdefault(
-            (model, seed),
-            [],
-        ).append(
-            {
-                "timestamp": timestamp,
-                "path": path,
-            }
+    missing = required_columns - set(status.columns)
+
+    if missing:
+        raise ValueError(
+            "The evaluation-status manifest is missing columns: "
+            f"{sorted(missing)}"
+        )
+
+    if len(status) != 25:
+        raise RuntimeError(
+            "Expected 25 verified evaluation records, "
+            f"found {len(status)}."
+        )
+
+    status = status.copy()
+    status["architecture"] = (
+        status["architecture"]
+        .astype(str)
+        .str.strip()
+        .str.lower()
+    )
+    status["seed"] = status["seed"].astype(int)
+    status["evaluation_run_id"] = (
+        status["evaluation_run_id"]
+        .astype(str)
+        .str.strip()
+    )
+
+    if status[
+        ["architecture", "seed"]
+    ].duplicated().any():
+        raise RuntimeError(
+            "Duplicate architecture--seed records were found "
+            "in the evaluation-status manifest."
+        )
+
+    if set(status["architecture"]) != set(MODELS):
+        raise RuntimeError(
+            "The evaluation-status manifest does not contain "
+            "the expected five architectures."
+        )
+
+    allowed_statuses = {
+        "evaluated_and_verified",
+        "already_verified",
+    }
+
+    if not set(
+        status["evaluation_status"]
+    ).issubset(allowed_statuses):
+        raise RuntimeError(
+            "The evaluation-status manifest contains an "
+            "unverified evaluation status."
         )
 
     selected = {}
     manifest_rows = []
 
     for model in MODELS:
-        model_seeds = {
-            seed
-            for candidate_model, seed in grouped
-            if candidate_model == model
-        }
+        model_rows = status[
+            status["architecture"] == model
+        ].copy()
+
+        model_seeds = set(
+            model_rows["seed"]
+        )
 
         if model_seeds != EXPECTED_SEEDS:
             raise RuntimeError(
-                f"{model}: expected seeds {sorted(EXPECTED_SEEDS)}, "
-                f"found {sorted(model_seeds)}."
+                f"{model}: expected verified seeds "
+                f"{sorted(EXPECTED_SEEDS)}, found "
+                f"{sorted(model_seeds)}."
             )
 
         for seed in sorted(EXPECTED_SEEDS):
-            candidates = grouped[(model, seed)]
+            row = model_rows.loc[
+                model_rows["seed"] == seed
+            ]
 
-            latest = max(
-                candidates,
-                key=lambda item: item["timestamp"],
+            if len(row) != 1:
+                raise RuntimeError(
+                    f"{model}, seed {seed}: expected one "
+                    "verified evaluation record."
+                )
+
+            evaluation_run_id = str(
+                row.iloc[0]["evaluation_run_id"]
             )
 
-            path = latest["path"]
+            expected_prefix = (
+                f"{model}_seed{seed}_"
+            )
+
+            if not evaluation_run_id.startswith(
+                expected_prefix
+            ):
+                raise RuntimeError(
+                    "Evaluation run-ID mismatch for "
+                    f"{model}, seed {seed}: "
+                    f"{evaluation_run_id}"
+                )
+
+            path = (
+                PRED_DIR
+                / (
+                    "bosque_public_predictions_"
+                    f"{evaluation_run_id}.csv"
+                )
+            )
+
+            if not path.exists() or path.stat().st_size == 0:
+                raise FileNotFoundError(
+                    "Missing verified BOSQUE prediction file: "
+                    f"{path}"
+                )
+
+            timestamp = evaluation_run_id.rsplit(
+                "_",
+                maxsplit=1,
+            )[-1]
+
+            candidate_count = len(
+                list(
+                    PRED_DIR.glob(
+                        "bosque_public_predictions_"
+                        f"{model}_seed{seed}_*.csv"
+                    )
+                )
+            )
+
             selected[(model, seed)] = path
 
             manifest_rows.append(
@@ -196,27 +307,49 @@ def discover_canonical_files():
                     "model": model,
                     "model_label": MODEL_LABELS[model],
                     "seed": seed,
-                    "timestamp": latest["timestamp"],
-                    "n_candidate_files": len(candidates),
+                    "timestamp": timestamp,
+                    "n_candidate_files": candidate_count,
                     "prediction_file": str(
                         path.relative_to(ROOT)
+                    ),
+                    "selection_source": str(
+                        status_path.relative_to(ROOT)
                     ),
                 }
             )
 
     if len(selected) != 25:
         raise RuntimeError(
-            f"Expected 25 canonical BOSQUE files, found {len(selected)}."
+            "Expected 25 canonical BOSQUE files, "
+            f"found {len(selected)}."
         )
 
-    manifest = pd.DataFrame(manifest_rows)
-    manifest_path = (
-        LOGS / "bosque_gap_prediction_manifest.csv"
+    manifest = pd.DataFrame(
+        manifest_rows
     )
-    manifest.to_csv(manifest_path, index=False)
 
-    print("Canonical BOSQUE files:", len(selected))
-    print("Saved manifest:", manifest_path)
+    manifest_path = (
+        LOGS
+        / "bosque_gap_prediction_manifest.csv"
+    )
+
+    manifest.to_csv(
+        manifest_path,
+        index=False,
+    )
+
+    print(
+        "Canonical BOSQUE files:",
+        len(selected),
+    )
+    print(
+        "Selection source:",
+        status_path,
+    )
+    print(
+        "Saved manifest:",
+        manifest_path,
+    )
 
     return selected
 
@@ -513,7 +646,7 @@ def main():
     parser.add_argument(
         "--seed",
         type=int,
-        default=20260716,
+        default=get_analysis_seed("seed_aware_subgroup_gap"),
     )
 
     args = parser.parse_args()
