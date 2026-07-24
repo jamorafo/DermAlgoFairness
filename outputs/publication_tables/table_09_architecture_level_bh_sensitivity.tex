@@ -7,7 +7,7 @@
 \renewcommand{\arraystretch}{1.08}
 \begin{tabular}{llrrrrrrl}
 \toprule
-\textbf{Metric} & \textbf{Architecture} & \textbf{Mean gap} & \textbf{SD seeds} & \textbf{95\% CI} & \textbf{$p$} & \textbf{$p_{\mathrm{BH}}$} & \textbf{$p_{\mathrm{BY}}$} & \textbf{BH $<0.05$} \\
+\textbf{Metric} & \textbf{Architecture} & \textbf{Mean gap} & \textbf{SD runs} & \textbf{95\% CI} & \textbf{$p$} & \textbf{$p_{\mathrm{BH}}$} & \textbf{$p_{\mathrm{BY}}$} & \textbf{BH $<0.05$} \\
 \midrule
 Recall / sensitivity & ResNet50 & 0.044 & 0.052 & [-0.175, 0.266] & 0.7007 & 0.7786 & 1.0000 & No \\
  & DenseNet121 & 0.101 & 0.035 & [-0.105, 0.304] & 0.3367 & 0.4208 & 1.0000 & No \\
@@ -32,11 +32,9 @@ Precision & ResNet50 & 0.206 & 0.028 & [0.020, 0.429] & 0.0475 & 0.1120 & 0.4029
  & MobileNetV2 & 0.254 & 0.101 & [0.060, 0.467] & 0.0141 & 0.0664 & 0.2389 & No \\
  & EfficientNetV2B0 & 0.252 & 0.042 & [0.060, 0.463] & 0.0145 & 0.0664 & 0.2389 & No \\
  & VGG16 & 0.252 & 0.046 & [0.063, 0.462] & 0.0125 & 0.0664 & 0.2389 & No \\
-\addlinespace
 \bottomrule
 \end{tabular}
 \begin{flushleft}
-\footnotesize
-Notes: The architecture-level estimand is the mean light-minus-dark performance gap across the five locked seed-specific systems. Positive values indicate higher performance in the light-phototype group. BOSQUE light and dark images were resampled separately; within each bootstrap replicate, the same sampled image indices were applied to all 25 systems. The 95\% intervals are percentile-bootstrap intervals. Two-sided $p$-values were obtained from the null-centred bootstrap distribution. Benjamini--Hochberg adjustment was applied to the prespecified family of 20 architecture--primary-metric tests. Benjamini--Yekutieli adjusted values are reported as a conservative dependence sensitivity analysis. Inference is conditional on the five observed training seeds and on image-level independence within the BOSQUE ORP. This secondary analysis does not replace the locked-system TAC, ETC, benchmark-preservation, or interval results.
+\footnotesize Notes: The architecture-level estimand is the mean light-minus-dark performance gap across the five locked run-specific systems. Positive values indicate higher performance in the light-phototype group. BOSQUE light and dark images were resampled separately; within each bootstrap replicate, the same sampled image indices were applied to all 25 systems. The 95\% intervals are percentile-bootstrap intervals. Two-sided $p$-values were obtained from the null-centred bootstrap distribution. Benjamini--Hochberg adjustment was applied to the prespecified family of 20 architecture--primary-metric tests. Benjamini--Yekutieli adjusted values are reported as a conservative dependence sensitivity analysis. Inference is conditional on the five observed training runs and on image-level independence within the BOSQUE ORP. This secondary analysis does not replace the locked-system TAC, ETC, benchmark-preservation, or interval results.
 \end{flushleft}
 \end{table}

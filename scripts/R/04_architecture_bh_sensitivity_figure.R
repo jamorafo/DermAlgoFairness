@@ -1,72 +1,220 @@
 # -------------------------------------------------------------------------
-# Architecture-level BH sensitivity figure.
-# Plotting only: values are the finalized 10,000-replicate results.
+# Architecture-level multiplicity-adjusted subgroup sensitivity figure.
+#
+# Input:
+#   outputs/publication_tables/
+#     table_09_architecture_level_bh_sensitivity.csv
+#
+# Outputs:
+#   figure_architecture_level_bh_sensitivity.pdf
+#   figure_architecture_level_bh_sensitivity.png
+#
+# Plotting only. This script reads finalized results and does not repeat
+# bootstrap estimation or multiplicity adjustment.
 # -------------------------------------------------------------------------
 
 suppressPackageStartupMessages({
   library(ggplot2)
   library(dplyr)
   library(readr)
+  library(scales)
 })
 
-source(file.path("scripts", "R", "figure_theme.R"))
-
-output_dir <- file.path("outputs", "figures-r")
-dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
-
-csv_text <- paste(
-  "Metric,Architecture,mean_gap,ci_low,ci_high,p_bh,bh_significant",
-  "Recall / sensitivity,ResNet50,0.156,-0.062,0.367,0.2261,No",
-  "Recall / sensitivity,DenseNet121,0.091,-0.117,0.295,0.4370,No",
-  "Recall / sensitivity,MobileNetV2,-0.012,-0.228,0.208,0.9101,No",
-  "Recall / sensitivity,EfficientNetV2B0,0.128,-0.085,0.346,0.3106,No",
-  "Recall / sensitivity,VGG16,0.040,-0.135,0.218,0.6982,No",
-  "AUC-PR,ResNet50,0.185,0.047,0.360,0.1467,No",
-  "AUC-PR,DenseNet121,0.131,-0.006,0.295,0.2146,No",
-  "AUC-PR,MobileNetV2,0.235,0.073,0.420,0.0970,No",
-  "AUC-PR,EfficientNetV2B0,0.165,0.032,0.336,0.1725,No",
-  "AUC-PR,VGG16,0.159,0.011,0.330,0.1888,No",
-  "F1-score,ResNet50,0.173,-0.012,0.395,0.2146,No",
-  "F1-score,DenseNet121,0.108,-0.061,0.306,0.3106,No",
-  "F1-score,MobileNetV2,0.129,-0.037,0.325,0.2261,No",
-  "F1-score,EfficientNetV2B0,0.148,-0.014,0.347,0.2166,No",
-  "F1-score,VGG16,0.079,-0.071,0.255,0.4056,No",
-  "Precision,ResNet50,0.161,-0.002,0.356,0.2146,No",
-  "Precision,DenseNet121,0.132,-0.028,0.341,0.2261,No",
-  "Precision,MobileNetV2,0.352,0.159,0.559,0.0160,Yes",
-  "Precision,EfficientNetV2B0,0.173,-0.013,0.398,0.2146,No",
-  "Precision,VGG16,0.167,-0.031,0.394,0.2261,No",
-  sep = "\n"
+source(
+  file.path(
+    "scripts",
+    "R",
+    "figure_theme.R"
+  )
 )
 
-plot_data <- read_csv(
-  I(csv_text),
-  show_col_types = FALSE
-) |>
+input_file <- file.path(
+  "outputs",
+  "publication_tables",
+  "table_09_architecture_level_bh_sensitivity.csv"
+)
+
+output_dir <- Sys.getenv(
+  "DERMALGO_FIGURE_OUTPUT_DIR",
+  unset = file.path(
+    "outputs",
+    "figures-r"
+  )
+)
+
+if (!file.exists(input_file)) {
+  stop(
+    "Finalized Table 09 CSV was not found: ",
+    input_file
+  )
+}
+
+dir.create(
+  output_dir,
+  recursive = TRUE,
+  showWarnings = FALSE
+)
+
+raw_data <- read_csv(
+  input_file,
+  show_col_types = FALSE,
+  progress = FALSE
+)
+
+required_columns <- c(
+  "Metric",
+  "Architecture",
+  "n_seeds",
+  "observed_mean_gap",
+  "sd_seed_gaps",
+  "bootstrap_ci_low",
+  "bootstrap_ci_high",
+  "n_boot_valid",
+  "p_value_raw",
+  "p_value_bh",
+  "p_value_by",
+  "bh_significant",
+  "by_significant"
+)
+
+missing_columns <- setdiff(
+  required_columns,
+  names(raw_data)
+)
+
+if (length(missing_columns) > 0L) {
+  stop(
+    "Table 09 is missing required columns: ",
+    paste(
+      missing_columns,
+      collapse = ", "
+    )
+  )
+}
+
+if (nrow(raw_data) != 20L) {
+  stop(
+    "Expected 20 architecture--metric rows, found ",
+    nrow(raw_data),
+    "."
+  )
+}
+
+if (
+  any(raw_data$n_seeds != 5L) ||
+  any(raw_data$n_boot_valid != 10000L)
+) {
+  stop(
+    "Table 09 must document five training runs and ",
+    "10,000 bootstrap replicates per row."
+  )
+}
+
+if (
+  anyDuplicated(
+    raw_data[
+      c(
+        "Metric",
+        "Architecture"
+      )
+    ]
+  )
+) {
+  stop(
+    "Duplicate architecture--metric rows were found."
+  )
+}
+
+if (
+  any(!is.finite(raw_data$observed_mean_gap)) ||
+  any(!is.finite(raw_data$bootstrap_ci_low)) ||
+  any(!is.finite(raw_data$bootstrap_ci_high)) ||
+  any(!is.finite(raw_data$p_value_bh))
+) {
+  stop(
+    "Table 09 contains missing or non-finite plotted values."
+  )
+}
+
+if (
+  any(
+    raw_data$bootstrap_ci_low >
+      raw_data$observed_mean_gap
+  ) ||
+  any(
+    raw_data$bootstrap_ci_high <
+      raw_data$observed_mean_gap
+  )
+) {
+  stop(
+    "At least one Table 09 interval does not contain its point estimate."
+  )
+}
+
+bh_flag <- tolower(
+  trimws(
+    as.character(
+      raw_data$bh_significant
+    )
+  )
+) %in% c(
+  "yes",
+  "true",
+  "1"
+)
+
+if (
+  any(
+    bh_flag !=
+      (
+        raw_data$p_value_bh < 0.05
+      )
+  )
+) {
+  stop(
+    "BH significance labels are inconsistent with adjusted p-values."
+  )
+}
+
+metric_levels <- c(
+  "Recall / sensitivity",
+  "AUC-PR",
+  "F1-score",
+  "Precision"
+)
+
+architecture_levels <- rev(
+  c(
+    "ResNet50",
+    "DenseNet121",
+    "MobileNetV2",
+    "EfficientNetV2B0",
+    "VGG16"
+  )
+)
+
+plot_data <- raw_data |>
+  transmute(
+    Metric,
+    Architecture,
+    mean_gap = observed_mean_gap,
+    ci_low = bootstrap_ci_low,
+    ci_high = bootstrap_ci_high,
+    p_bh = p_value_bh,
+    BH_status = if_else(
+      bh_flag,
+      "Retained after BH adjustment",
+      "Not retained after BH adjustment"
+    )
+  ) |>
   mutate(
     Metric = factor(
       Metric,
-      levels = c(
-        "Recall / sensitivity",
-        "AUC-PR",
-        "F1-score",
-        "Precision"
-      )
+      levels = metric_levels
     ),
     Architecture = factor(
       Architecture,
-      levels = rev(c(
-        "ResNet50",
-        "DenseNet121",
-        "MobileNetV2",
-        "EfficientNetV2B0",
-        "VGG16"
-      ))
-    ),
-    BH_status = if_else(
-      bh_significant == "Yes",
-      "Retained after BH adjustment",
-      "Not retained after BH adjustment"
+      levels = architecture_levels
     ),
     BH_status = factor(
       BH_status,
@@ -77,13 +225,37 @@ plot_data <- read_csv(
     )
   )
 
-if (nrow(plot_data) != 20L) {
-  stop("Expected 20 architecture-metric rows, found ", nrow(plot_data), ".")
+if (
+  anyNA(plot_data$Metric) ||
+  anyNA(plot_data$Architecture)
+) {
+  stop(
+    "Unexpected metric or architecture labels were found."
+  )
 }
 
 status_colours <- c(
   "Retained after BH adjustment" = "#D55E00",
   "Not retained after BH adjustment" = "#6B7280"
+)
+
+observed_range <- range(
+  c(
+    plot_data$ci_low,
+    plot_data$ci_high,
+    0
+  ),
+  finite = TRUE
+)
+
+padding <- max(
+  0.03,
+  diff(observed_range) * 0.05
+)
+
+x_limits <- c(
+  observed_range[[1]] - padding,
+  observed_range[[2]] + padding
 )
 
 figure <- ggplot(
@@ -96,22 +268,21 @@ figure <- ggplot(
 ) +
   geom_vline(
     xintercept = 0,
-    linewidth = 0.55,
+    size = 0.55,
     linetype = "dashed",
     colour = "grey25"
   ) +
-  geom_errorbar(
+  geom_segment(
     aes(
-      xmin = ci_low,
-      xmax = ci_high
+      x = ci_low,
+      xend = ci_high,
+      yend = Architecture
     ),
-    orientation = "y",
-    width = 0,
-    linewidth = 0.8,
-    lineend = "round"
+    size = 0.8
   ) +
   geom_point(
-    size = 2.8
+    size = 2.8,
+    stroke = 0
   ) +
   facet_wrap(
     vars(Metric),
@@ -119,15 +290,20 @@ figure <- ggplot(
   ) +
   scale_colour_manual(
     values = status_colours,
-    drop = FALSE
+    drop = TRUE
   ) +
   scale_x_continuous(
-    breaks = seq(-0.2, 0.6, by = 0.2),
-    limits = c(-0.25, 0.60),
-    labels = scales::label_number(
+    breaks = pretty_breaks(
+      n = 6
+    ),
+    labels = label_number(
       accuracy = 0.01,
       trim = TRUE
     )
+  ) +
+  coord_cartesian(
+    xlim = x_limits,
+    clip = "off"
   ) +
   labs(
     x = "Mean performance difference (light - dark)",
@@ -137,11 +313,18 @@ figure <- ggplot(
   theme_publication() +
   theme(
     legend.position = "top",
-    strip.text = element_text(face = "bold"),
-    panel.spacing = grid::unit(1.1, "lines")
+    strip.text = element_text(
+      face = "bold"
+    ),
+    panel.spacing = grid::unit(
+      1.1,
+      "lines"
+    )
   )
 
-pdf_device <- if (capabilities("cairo")) {
+pdf_device <- if (
+  capabilities("cairo")
+) {
   grDevices::cairo_pdf
 } else {
   grDevices::pdf
@@ -177,6 +360,20 @@ ggsave(
   bg = "white"
 )
 
+for (path in c(pdf_path, png_path)) {
+  if (
+    !file.exists(path) ||
+    file.info(path)$size <= 0
+  ) {
+    stop(
+      "Missing or empty Figure 04 output: ",
+      path
+    )
+  }
+}
+
 message("Saved: ", pdf_path)
 message("Saved: ", png_path)
-message("Completed the architecture-level BH sensitivity figure.")
+message(
+  "Completed the architecture-level BH sensitivity figure."
+)

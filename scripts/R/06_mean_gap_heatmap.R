@@ -26,7 +26,13 @@ input_file <- file.path(
   "bosque_light_dark_gap_summary_by_architecture.csv"
 )
 
-output_dir <- file.path("outputs", "figures-r")
+output_dir <- Sys.getenv(
+  "DERMALGO_FIGURE_OUTPUT_DIR",
+  unset = file.path(
+    "outputs",
+    "figures-r"
+  )
+)
 
 if (!file.exists(input_file)) {
   stop(
@@ -143,7 +149,7 @@ if (nrow(plot_data) != expected_rows) {
 
 if (any(plot_data$n_seeds != 5L)) {
   stop(
-    "At least one architecture-metric row does not contain five seeds."
+    "At least one architecture-metric row does not contain five training runs."
   )
 }
 
@@ -182,7 +188,7 @@ figure <- ggplot(
   )
 ) +
   geom_tile(
-    linewidth = 0.7,
+    size = 0.7,
     colour = "white"
   ) +
   geom_text(
@@ -234,7 +240,6 @@ figure <- ggplot(
       barheight = grid::unit(0.42, "cm"),
       ticks = TRUE,
       frame.colour = "grey55",
-      frame.linewidth = 0.35
     )
   ) +
   labs(
@@ -249,13 +254,13 @@ figure <- ggplot(
     panel.border = element_rect(
       colour = "grey55",
       fill = NA,
-      linewidth = 0.45
+      size = 0.45
     ),
     panel.spacing.x = grid::unit(0.18, "cm"),
     strip.background = element_rect(
       fill = "grey94",
       colour = "grey55",
-      linewidth = 0.45
+      size = 0.45
     ),
     strip.text = element_text(
       face = "bold",

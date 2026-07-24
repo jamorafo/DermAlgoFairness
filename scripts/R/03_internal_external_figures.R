@@ -28,7 +28,13 @@ input_file <- file.path(
   "interval_tac_etc_by_seed.csv"
 )
 
-output_dir <- file.path("outputs", "figures-r")
+output_dir <- Sys.getenv(
+  "DERMALGO_FIGURE_OUTPUT_DIR",
+  unset = file.path(
+    "outputs",
+    "figures-r"
+  )
+)
 
 if (!file.exists(input_file)) {
   stop(
@@ -85,6 +91,80 @@ architecture_positions <- c(
   "VGG16" = 1
 )
 
+seed_config_file <- file.path(
+  "config",
+  "random_seeds.json"
+)
+
+if (!file.exists(seed_config_file)) {
+  stop(
+    "Seed configuration was not found: ",
+    seed_config_file
+  )
+}
+
+seed_config_lines <- readLines(
+  seed_config_file,
+  warn = FALSE
+)
+
+training_seed_lines <- grep(
+  '"training_run_[1-5]"[[:space:]]*:',
+  seed_config_lines,
+  value = TRUE
+)
+
+if (length(training_seed_lines) != 5L) {
+  stop(
+    "Expected five configured training-run values, found ",
+    length(training_seed_lines),
+    "."
+  )
+}
+
+training_run_numbers <- as.integer(
+  sub(
+    '.*"training_run_([1-5])".*',
+    "\\1",
+    training_seed_lines
+  )
+)
+
+training_seed_values <- sub(
+  '.*:[[:space:]]*([0-9]+),?[[:space:]]*$',
+  "\\1",
+  training_seed_lines
+)
+
+ordering <- order(training_run_numbers)
+
+training_run_numbers <- training_run_numbers[
+  ordering
+]
+
+training_seed_values <- training_seed_values[
+  ordering
+]
+
+if (
+  !identical(
+    training_run_numbers,
+    1:5
+  ) ||
+  anyDuplicated(
+    training_seed_values
+  )
+) {
+  stop(
+    "Configured training-run values are incomplete or duplicated."
+  )
+}
+
+training_run_by_seed <- setNames(
+  training_run_numbers,
+  training_seed_values
+)
+
 condition_colours <- c(
   "HAM10000 source" = "#0072B2",
   "BOSQUE target" = "#D55E00"
@@ -95,21 +175,80 @@ condition_shapes <- c(
   "BOSQUE target" = 17
 )
 
-metric_specs <- list(
-  f1 = list(
-    filename = "figure_internal_external_f1",
-    x_label = "F1-score"
+all_metrics_requested <- (
+  "--all-metrics" %in%
+    commandArgs(
+      trailingOnly = TRUE
+    )
+)
+
+metric_specs_all <- list(
+  recall = list(
+    filename = "figure_internal_external_recall",
+    x_label = "Sensitivity",
+    metric_group = "Primary"
   ),
   auc_pr = list(
     filename = "figure_internal_external_auc_pr",
-    x_label = "AUC-PR"
+    x_label = "AUC-PR",
+    metric_group = "Primary"
+  ),
+  f1 = list(
+    filename = "figure_internal_external_f1",
+    x_label = "F1-score",
+    metric_group = "Primary"
+  ),
+  precision = list(
+    filename = "figure_internal_external_precision",
+    x_label = "Precision",
+    metric_group = "Primary"
+  ),
+  accuracy = list(
+    filename = "figure_internal_external_accuracy",
+    x_label = "Accuracy",
+    metric_group = "Secondary"
+  ),
+  specificity = list(
+    filename = "figure_internal_external_specificity",
+    x_label = "Specificity",
+    metric_group = "Secondary"
+  ),
+  auc_roc = list(
+    filename = "figure_internal_external_auc_roc",
+    x_label = "AUC-ROC",
+    metric_group = "Secondary"
   )
 )
+
+metric_specs <- if (
+  all_metrics_requested
+) {
+  metric_specs_all
+} else {
+  metric_specs_all[
+    c(
+      "f1",
+      "auc_pr"
+    )
+  ]
+}
+
+message(
+  "Internal/external figure mode: ",
+  if (
+    all_metrics_requested
+  ) {
+    "all seven metrics"
+  } else {
+    "canonical F1 and AUC-PR"
+  }
+)
+
 
 make_source_target_plot <- function(metric_name, specification) {
   plot_data <- results |>
     filter(
-      metric_group == "Primary",
+      metric_group == specification$metric_group,
       target_condition == "BOSQUE overall",
       metric == metric_name
     ) |>
@@ -118,13 +257,53 @@ make_source_target_plot <- function(metric_name, specification) {
       architecture_position = unname(
         architecture_positions[as.character(model)]
       ),
-      seed_offset = (as.numeric(seed) - 3) * 0.065,
+      seed_key = format(
+        seed,
+        scientific = FALSE,
+        trim = TRUE
+      ),
+      training_run = unname(
+        training_run_by_seed[
+          seed_key
+        ]
+      ),
+      seed_offset = (
+        training_run - 3
+      ) * 0.065,
       y_position = architecture_position + seed_offset
     )
 
+  if (
+    anyNA(
+      plot_data$training_run
+    ) ||
+    dplyr::n_distinct(
+      plot_data$seed_key
+    ) != 5L
+  ) {
+    unknown_values <- sort(
+      unique(
+        plot_data$seed_key[
+          is.na(
+            plot_data$training_run
+          )
+        ]
+      )
+    )
+
+    stop(
+      "Figure 03 could not map all training values to ",
+      "Run 1--Run 5. Unmapped values: ",
+      paste(
+        unknown_values,
+        collapse = ", "
+      )
+    )
+  }
+
   if (nrow(plot_data) != 25L) {
     stop(
-      "Expected 25 architecture-seed rows for metric '",
+      "Expected 25 architecture-run rows for metric '",
       metric_name,
       "', but found ",
       nrow(plot_data),
@@ -200,7 +379,7 @@ make_source_target_plot <- function(metric_name, specification) {
         xintercept = threshold,
         linetype = legend
       ),
-      linewidth = 0.65,
+      size = 0.65,
       colour = "grey25",
       show.legend = TRUE
     ) +
@@ -212,9 +391,8 @@ make_source_target_plot <- function(metric_name, specification) {
         y = y_position,
         yend = y_position
       ),
-      linewidth = 0.75,
+      size = 0.75,
       colour = "grey72",
-      lineend = "round"
     ) +
     geom_point(
       data = point_data,
@@ -278,7 +456,7 @@ make_source_target_plot <- function(metric_name, specification) {
       legend.box = "horizontal",
       legend.spacing.x = grid::unit(0.35, "cm"),
       panel.grid.major.y = element_line(
-        linewidth = 0.35,
+        size = 0.35,
         colour = "grey92"
       ),
       plot.margin = margin(7, 10, 7, 8)
@@ -333,4 +511,8 @@ for (metric_name in names(metric_specs)) {
   message("Saved: ", png_path)
 }
 
-message("Completed the internal-versus-external R figures.")
+message(
+  "Completed ",
+  length(metric_specs),
+  " internal-versus-external metric figure(s)."
+)

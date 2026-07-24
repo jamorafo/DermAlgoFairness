@@ -1,7 +1,7 @@
 \begin{table}[h!]
 \centering
 \scriptsize
-\caption{Interval-based target adequacy and performance-preservation decisions across locked model--seed systems.}
+\caption{Interval-based target adequacy and performance-preservation decisions across locked architecture--run systems.}
 \label{tab:interval-tac-etc-consistency}
 \setlength{\tabcolsep}{3pt}
 \renewcommand{\arraystretch}{1.08}
@@ -36,11 +36,9 @@ Secondary & Accuracy & Overall & 0 & 7 & 18 & 0 & 0 & 0 & 25 \\
  & AUC-ROC & Overall & 0 & 24 & 1 & 0 & 0 & 0 & 25 \\
  &  & Light phototype & 0 & 25 & 0 & 0 & 0 & 0 & 25 \\
  &  & Dark phototype & 0 & 23 & 2 & 0 & 0 & 0 & 25 \\
-\addlinespace
 \bottomrule
 \end{tabular}
 \begin{flushleft}
-\footnotesize
-Notes: Each row summarizes 25 locked model--seed decisions, corresponding to five architectures and five random seeds. For the overall BOSQUE condition, preservation denotes ETC transportability relative to the HAM10000 held-out source estimate. For the light- and dark-phototype conditions, preservation denotes comparison with the overall HAM10000 source benchmark and is not subgroup transportability. Primary metrics drive the main interpretation; secondary metrics are descriptive. Decisions are based on 95\% intervals.
+\footnotesize Notes: Each row summarizes 25 locked architecture--run decisions, corresponding to five architectures and five independently randomized training runs. For the overall BOSQUE condition, preservation denotes ETC transportability relative to the HAM10000 held-out source estimate. For the light- and dark-phototype conditions, preservation denotes comparison with the overall HAM10000 source benchmark and is not subgroup transportability. Primary metrics drive the main interpretation; secondary metrics are descriptive. Decisions are based on 95\% intervals.
 \end{flushleft}
 \end{table}

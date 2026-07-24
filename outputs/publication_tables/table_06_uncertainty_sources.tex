@@ -13,9 +13,9 @@ Source ORP uncertainty & HAM10000 internal test ORP & Finite evaluation uncertai
 \addlinespace
 Target ORP uncertainty & BOSQUE overall and subgroup ORPs & Finite external evaluation uncertainty for target overall and subgroup performance. & Bootstrap or metric-specific intervals computed on non-augmented BOSQUE evaluation images. & Evidence for national or regional population representativity. \\
 \addlinespace
-Training stochasticity & CNN model-development procedure & Variation in the learned function due to initialization, minibatch ordering, augmentation, and optimization. & Five independently trained locked replicas per architecture; conclusions summarized across model--seed decisions. & Additional sampling information from the source or target ORP. \\
+Training stochasticity & CNN model-development procedure & Variation in the learned function due to initialization, minibatch ordering, augmentation, and optimization. & Five independently trained locked replicas per architecture; conclusions summarized across architecture--run decisions. & Additional sampling information from the source or target ORP. \\
 \addlinespace
-Training augmentation & Training images only & Transformations used to expose the optimizer to modified versions of training images. & Part of model construction; affects the learned function \$f\_\{a,s\}\$. & Additional independent evaluation observations. \\
+Training augmentation & Training images only & Transformations used to expose the optimizer to modified versions of training images. & Part of model construction; affects the learned function $f_{a,s}$. & Additional independent evaluation observations. \\
 \addlinespace
 Training oversampling / class balancing & Training distribution only & Modification of class frequencies presented to the learning algorithm. & Part of the development procedure; documented separately from the evaluation ORP. & A change in the source or target performance estimand. \\
 \addlinespace
@@ -24,11 +24,9 @@ Threshold dependence & Threshold-based metrics & Sensitivity, specificity, preci
 Clustering / dependence & Images from same lesion, patient, center, or device & Evaluation units may not be fully independent if multiple images share higher-level origins. & Document available clustering information; use cluster bootstrap when the relevant identifiers are available. & Ignorable if repeated units are known and identifiable. \\
 \addlinespace
 Target sampling scope & BOSQUE external ORP & The target ORP supports claims under the BOSQUE evaluation condition. & Inference is restricted to the BOSQUE condition unless a broader sampling design is justified. & Automatic generalization to a national or regional population. \\
-\addlinespace
 \bottomrule
 \end{tabular}
 \begin{flushleft}
-\footnotesize
-Notes: Evaluation uncertainty is conditional on a locked predictive system and is estimated from the corresponding non-augmented ORP. Training stochasticity concerns variation in the learned function across random seeds and is summarized separately from ORP sampling uncertainty. Training augmentation and oversampling are model-development procedures, not mechanisms for increasing the effective evaluation sample size.
+\footnotesize Notes: Evaluation uncertainty is conditional on a locked predictive system and is estimated from the corresponding non-augmented ORP. Training stochasticity concerns variation in the learned function across independently randomized training runs and is summarized separately from ORP sampling uncertainty. Training augmentation and oversampling are model-development procedures, not mechanisms for increasing the effective evaluation sample size.
 \end{flushleft}
 \end{table}

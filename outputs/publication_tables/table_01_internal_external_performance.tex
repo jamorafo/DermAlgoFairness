@@ -1,33 +1,31 @@
 \begin{table}[h!]
 \centering
 \scriptsize
-\caption{Internal source and external target performance across five training seeds.}
+\caption{Internal source and external target performance across five independently randomized training runs.}
 \label{tab:internal-external-performance}
 \setlength{\tabcolsep}{3.5pt}
 \renewcommand{\arraystretch}{1.08}
 \begin{tabular}{llrrrrrrr}
 \toprule
-\textbf{Model} & \textbf{Evaluation ORP} & \textbf{Acc.} & \textbf{Prec.} & \textbf{Recall} & \textbf{Spec.} & \textbf{F1} & \textbf{AUC-ROC} & \textbf{AUC-PR} \\
+\textbf{Architecture} & \textbf{Evaluation ORP} & \textbf{Acc.} & \textbf{Prec.} & \textbf{Recall} & \textbf{Spec.} & \textbf{F1} & \textbf{AUC-ROC} & \textbf{AUC-PR} \\
 \midrule
-ResNet50 & HAM10000 internal & 0.892 $\pm$ 0.012 & 0.726 $\pm$ 0.030 & 0.717 $\pm$ 0.041 & 0.934 $\pm$ 0.008 & 0.721 $\pm$ 0.032 & 0.934 $\pm$ 0.011 & 0.789 $\pm$ 0.038 \\
- & BOSQUE external & 0.667 $\pm$ 0.011 & 0.908 $\pm$ 0.021 & 0.542 $\pm$ 0.028 & 0.898 $\pm$ 0.031 & 0.678 $\pm$ 0.018 & 0.827 $\pm$ 0.014 & 0.898 $\pm$ 0.015 \\
+ResNet50 & HAM10000 internal & 0.862 $\pm$ 0.002 & 0.621 $\pm$ 0.008 & 0.693 $\pm$ 0.028 & 0.901 $\pm$ 0.006 & 0.655 $\pm$ 0.011 & 0.916 $\pm$ 0.004 & 0.724 $\pm$ 0.010 \\
+ & BOSQUE external & 0.703 $\pm$ 0.016 & 0.907 $\pm$ 0.031 & 0.606 $\pm$ 0.039 & 0.883 $\pm$ 0.047 & 0.726 $\pm$ 0.023 & 0.846 $\pm$ 0.014 & 0.915 $\pm$ 0.009 \\
 \addlinespace
-DenseNet121 & HAM10000 internal & 0.862 $\pm$ 0.013 & 0.630 $\pm$ 0.033 & 0.716 $\pm$ 0.024 & 0.897 $\pm$ 0.012 & 0.670 $\pm$ 0.027 & 0.913 $\pm$ 0.008 & 0.733 $\pm$ 0.023 \\
- & BOSQUE external & 0.699 $\pm$ 0.040 & 0.924 $\pm$ 0.017 & 0.586 $\pm$ 0.075 & 0.909 $\pm$ 0.031 & 0.714 $\pm$ 0.054 & 0.842 $\pm$ 0.029 & 0.902 $\pm$ 0.020 \\
+DenseNet121 & HAM10000 internal & 0.837 $\pm$ 0.005 & 0.554 $\pm$ 0.010 & 0.696 $\pm$ 0.017 & 0.869 $\pm$ 0.005 & 0.617 $\pm$ 0.010 & 0.878 $\pm$ 0.003 & 0.626 $\pm$ 0.020 \\
+ & BOSQUE external & 0.681 $\pm$ 0.022 & 0.910 $\pm$ 0.038 & 0.565 $\pm$ 0.028 & 0.894 $\pm$ 0.051 & 0.697 $\pm$ 0.023 & 0.835 $\pm$ 0.021 & 0.892 $\pm$ 0.019 \\
 \addlinespace
-MobileNetV2 & HAM10000 internal & 0.863 $\pm$ 0.007 & 0.633 $\pm$ 0.019 & 0.716 $\pm$ 0.020 & 0.899 $\pm$ 0.008 & 0.672 $\pm$ 0.015 & 0.911 $\pm$ 0.011 & 0.726 $\pm$ 0.045 \\
- & BOSQUE external & 0.634 $\pm$ 0.029 & 0.809 $\pm$ 0.024 & 0.571 $\pm$ 0.036 & 0.751 $\pm$ 0.031 & 0.669 $\pm$ 0.031 & 0.758 $\pm$ 0.014 & 0.858 $\pm$ 0.007 \\
+MobileNetV2 & HAM10000 internal & 0.850 $\pm$ 0.008 & 0.591 $\pm$ 0.022 & 0.674 $\pm$ 0.025 & 0.891 $\pm$ 0.013 & 0.629 $\pm$ 0.014 & 0.892 $\pm$ 0.006 & 0.689 $\pm$ 0.009 \\
+ & BOSQUE external & 0.664 $\pm$ 0.032 & 0.825 $\pm$ 0.028 & 0.612 $\pm$ 0.048 & 0.758 $\pm$ 0.049 & 0.702 $\pm$ 0.035 & 0.772 $\pm$ 0.018 & 0.863 $\pm$ 0.018 \\
 \addlinespace
-EfficientNetV2B0 & HAM10000 internal & 0.880 $\pm$ 0.008 & 0.705 $\pm$ 0.038 & 0.669 $\pm$ 0.041 & 0.931 $\pm$ 0.016 & 0.685 $\pm$ 0.017 & 0.916 $\pm$ 0.007 & 0.751 $\pm$ 0.032 \\
- & BOSQUE external & 0.744 $\pm$ 0.020 & 0.901 $\pm$ 0.023 & 0.682 $\pm$ 0.033 & 0.860 $\pm$ 0.039 & 0.776 $\pm$ 0.021 & 0.855 $\pm$ 0.006 & 0.913 $\pm$ 0.008 \\
+EfficientNetV2B0 & HAM10000 internal & 0.856 $\pm$ 0.006 & 0.614 $\pm$ 0.021 & 0.643 $\pm$ 0.034 & 0.906 $\pm$ 0.012 & 0.628 $\pm$ 0.014 & 0.890 $\pm$ 0.001 & 0.638 $\pm$ 0.006 \\
+ & BOSQUE external & 0.754 $\pm$ 0.020 & 0.861 $\pm$ 0.015 & 0.741 $\pm$ 0.037 & 0.777 $\pm$ 0.034 & 0.796 $\pm$ 0.021 & 0.843 $\pm$ 0.003 & 0.903 $\pm$ 0.004 \\
 \addlinespace
-VGG16 & HAM10000 internal & 0.863 $\pm$ 0.006 & 0.630 $\pm$ 0.022 & 0.736 $\pm$ 0.049 & 0.894 $\pm$ 0.015 & 0.677 $\pm$ 0.016 & 0.919 $\pm$ 0.007 & 0.747 $\pm$ 0.020 \\
- & BOSQUE external & 0.651 $\pm$ 0.025 & 0.882 $\pm$ 0.012 & 0.534 $\pm$ 0.041 & 0.868 $\pm$ 0.017 & 0.664 $\pm$ 0.034 & 0.797 $\pm$ 0.021 & 0.881 $\pm$ 0.013 \\
-\addlinespace
+VGG16 & HAM10000 internal & 0.843 $\pm$ 0.012 & 0.572 $\pm$ 0.028 & 0.684 $\pm$ 0.025 & 0.880 $\pm$ 0.014 & 0.623 $\pm$ 0.022 & 0.894 $\pm$ 0.008 & 0.659 $\pm$ 0.025 \\
+ & BOSQUE external & 0.687 $\pm$ 0.021 & 0.870 $\pm$ 0.033 & 0.612 $\pm$ 0.062 & 0.826 $\pm$ 0.067 & 0.716 $\pm$ 0.033 & 0.799 $\pm$ 0.019 & 0.874 $\pm$ 0.011 \\
 \bottomrule
 \end{tabular}
 \begin{flushleft}
-\footnotesize
-Notes: Values are reported as mean $\pm$ standard deviation across five independently trained model replicas. HAM10000 internal denotes the source-side internal evaluation ORP. BOSQUE external denotes the external target-side ORP. Metrics are computed for the malignant class under the binary diagnostic task.
+\footnotesize Notes: Values are mean $\pm$ standard deviation across five independently randomized training runs. HAM10000 internal denotes the fixed lesion-grouped held-out source ORP ($990$ images from $747$ lesions). BOSQUE external denotes the external target ORP ($n=151$). Point estimates are computed for the malignant class under the locked binary diagnostic task.
 \end{flushleft}
 \end{table}
