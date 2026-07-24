@@ -28,7 +28,13 @@ input_file <- file.path(
   "table_04_interval_tac_etc_consistency.csv"
 )
 
-output_dir <- file.path("outputs", "figures-r")
+output_dir <- Sys.getenv(
+  "DERMALGO_FIGURE_OUTPUT_DIR",
+  unset = file.path(
+    "outputs",
+    "figures-r"
+  )
+)
 
 if (!file.exists(input_file)) {
   stop(
@@ -168,7 +174,7 @@ figure <- ggplot(
   geom_col(
     width = 0.66,
     colour = "white",
-    linewidth = 0.45
+    size = 0.45
   ) +
   geom_text(
     aes(
@@ -194,7 +200,7 @@ figure <- ggplot(
     expand = expansion(mult = c(0, 0))
   ) +
   labs(
-    x = "Locked architecture-seed systems (out of 25)",
+    x = "Locked systems (out of 25)",
     y = NULL,
     fill = NULL
   ) +

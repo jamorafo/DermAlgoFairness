@@ -27,7 +27,7 @@ theme_publication <- function(base_size = 10.5, base_family = "sans") {
       panel.grid.major.y = element_blank(),
       panel.grid.minor = element_blank(),
       panel.grid.major.x = element_line(
-        linewidth = 0.35,
+        size = 0.35,
         colour = "grey88"
       ),
       strip.background = element_blank(),

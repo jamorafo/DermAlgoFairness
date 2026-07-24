@@ -5,42 +5,40 @@
 \label{tab:target-pr-diagnostics}
 \setlength{\tabcolsep}{3pt}
 \renewcommand{\arraystretch}{1.08}
-\begin{tabular}{llrrrrrrr}
+\begin{tabular}{llrrrrrr}
 \toprule
-\textbf{Metric} & \textbf{Target} & \textbf{$n$ systems} & \textbf{$n_T$} & \textbf{Mean performance} & \textbf{SD systems} & \textbf{Mean half-width} & \textbf{Max half-width} & \textbf{Within tolerance} \\
+\textbf{Metric} & \textbf{Target} & \textbf{$n$ systems} & \textbf{$n_T$} & \textbf{Mean} & \textbf{SD systems} & \textbf{Mean HW} & \textbf{Max HW} \\
 \midrule
-Recall / sensitivity & Overall & 25 & 151 & 0.583 & 0.068 & 0.097 & 0.100 & 24/25 \\
- & Light phototype & 25 & 105 & 0.601 & 0.075 & 0.108 & 0.113 & 3/25 \\
- & Dark phototype & 25 & 46 & 0.520 & 0.079 & 0.215 & 0.220 & 0/25 \\
+Recall / sensitivity & Overall & 25 & 151 & 0.627 & 0.073 & 0.094 & 0.100 \\
+ & Light phototype & 25 & 105 & 0.637 & 0.077 & 0.106 & 0.113 \\
+ & Dark phototype & 25 & 46 & 0.592 & 0.081 & 0.210 & 0.220 \\
 \addlinespace
-AUC-PR & Overall & 25 & 151 & 0.891 & 0.024 & 0.054 & 0.070 & 25/25 \\
- & Light phototype & 25 & 105 & 0.936 & 0.015 & 0.047 & 0.070 & 25/25 \\
- & Dark phototype & 25 & 46 & 0.761 & 0.046 & 0.160 & 0.190 & 0/25 \\
+AUC-PR & Overall & 25 & 151 & 0.889 & 0.023 & 0.057 & 0.076 \\
+ & Light phototype & 25 & 105 & 0.936 & 0.017 & 0.047 & 0.077 \\
+ & Dark phototype & 25 & 46 & 0.751 & 0.046 & 0.167 & 0.197 \\
 \addlinespace
-F1-score & Overall & 25 & 151 & 0.701 & 0.053 & 0.080 & 0.092 & 25/25 \\
- & Light phototype & 25 & 105 & 0.729 & 0.056 & 0.087 & 0.104 & 24/25 \\
- & Dark phototype & 25 & 46 & 0.601 & 0.061 & 0.193 & 0.222 & 0/25 \\
+F1-score & Overall & 25 & 151 & 0.727 & 0.044 & 0.076 & 0.087 \\
+ & Light phototype & 25 & 105 & 0.753 & 0.051 & 0.083 & 0.096 \\
+ & Dark phototype & 25 & 46 & 0.639 & 0.046 & 0.180 & 0.214 \\
 \addlinespace
-Precision & Overall & 25 & 151 & 0.884 & 0.045 & 0.076 & 0.101 & 24/25 \\
- & Light phototype & 25 & 105 & 0.935 & 0.022 & 0.067 & 0.094 & 25/25 \\
- & Dark phototype & 25 & 46 & 0.738 & 0.111 & 0.213 & 0.286 & 1/25 \\
+Precision & Overall & 25 & 151 & 0.875 & 0.042 & 0.076 & 0.092 \\
+ & Light phototype & 25 & 105 & 0.931 & 0.032 & 0.063 & 0.092 \\
+ & Dark phototype & 25 & 46 & 0.712 & 0.085 & 0.209 & 0.242 \\
 \addlinespace
-Accuracy & Overall & 25 & 151 & 0.679 & 0.047 & 0.074 & 0.079 & 25/25 \\
- & Light phototype & 25 & 105 & 0.676 & 0.054 & 0.088 & 0.095 & 25/25 \\
- & Dark phototype & 25 & 46 & 0.686 & 0.057 & 0.132 & 0.152 & 0/25 \\
+Accuracy & Overall & 25 & 151 & 0.698 & 0.038 & 0.073 & 0.076 \\
+ & Light phototype & 25 & 105 & 0.698 & 0.050 & 0.086 & 0.095 \\
+ & Dark phototype & 25 & 46 & 0.697 & 0.042 & 0.131 & 0.152 \\
 \addlinespace
-Specificity & Overall & 25 & 151 & 0.857 & 0.064 & 0.091 & 0.124 & 19/25 \\
- & Light phototype & 25 & 105 & 0.884 & 0.039 & 0.115 & 0.146 & 7/25 \\
- & Dark phototype & 25 & 46 & 0.826 & 0.117 & 0.136 & 0.197 & 3/25 \\
+Specificity & Overall & 25 & 151 & 0.828 & 0.072 & 0.099 & 0.126 \\
+ & Light phototype & 25 & 105 & 0.867 & 0.065 & 0.118 & 0.154 \\
+ & Dark phototype & 25 & 46 & 0.784 & 0.098 & 0.154 & 0.195 \\
 \addlinespace
-AUC-ROC & Overall & 25 & 151 & 0.816 & 0.040 & 0.069 & 0.081 & 25/25 \\
- & Light phototype & 25 & 105 & 0.851 & 0.037 & 0.082 & 0.100 & 24/25 \\
- & Dark phototype & 25 & 46 & 0.753 & 0.055 & 0.144 & 0.172 & 0/25 \\
-\addlinespace
+AUC-ROC & Overall & 25 & 151 & 0.819 & 0.033 & 0.069 & 0.084 \\
+ & Light phototype & 25 & 105 & 0.854 & 0.030 & 0.082 & 0.114 \\
+ & Dark phototype & 25 & 46 & 0.752 & 0.044 & 0.146 & 0.171 \\
 \bottomrule
 \end{tabular}
 \begin{flushleft}
-\footnotesize
-Notes: Each row summarizes 25 locked architecture--seed systems evaluated on a non-augmented BOSQUE target condition. Mean performance and SD describe variation across the 25 locked systems; the SD therefore combines architecture and training-seed variation. Precision is summarized by the half-width of the 95\% image-level percentile-bootstrap interval based on 2000 replicates. ``Within tolerance'' denotes a half-width $\leq 0.100$. This documentation tolerance is not a clinical threshold. Satisfying it establishes only finite-ORP precision under the observed BOSQUE condition, not full Predictive Representativity, bias control, interval coverage, or generalizability beyond BOSQUE.
+\footnotesize Notes: Each row summarizes 25 locked architecture--run systems. The BOSQUE ORPs contain $151$ images overall, $105$ light-phototype images, and $46$ dark-phototype images. HW denotes the half-width of the 95\% percentile-bootstrap interval. Target intervals use 10{,}000 image-level bootstrap replicates; because BOSQUE contains one image per lesion, this is also a lesion-level resampling scheme. SD systems describes architecture and training-run variation and is not a sampling standard error. Interval width is reported descriptively without imposing an additional post hoc precision threshold. These summaries do not establish clinical adequacy or generalizability beyond BOSQUE.
 \end{flushleft}
 \end{table}

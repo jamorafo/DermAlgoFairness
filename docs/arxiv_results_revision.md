@@ -1,55 +1,57 @@
 # Revised Public Results Workflow
 
-This document describes the standardized workflow for revising and extending the public results associated with the `DermAlgoFairness` project and its arXiv manuscript.
+This file is retained as the stable documentation entry point referenced by
+earlier versions of the repository README.
 
-The revision is based on the published and publicly available version of the BOSQUE dataset. This version is preferred because it provides a cleaner and more citable data source for reproducibility than earlier internal working versions used during project development.
+The repository now distinguishes two result generations:
 
-The goal is to preserve continuity with the original public results while improving reproducibility, traceability, and reporting quality.
+1. the original workflow associated with `arXiv:2507.14176v1`;
+2. the revised dissertation and publication workflow.
 
-## Scope
+## Documentation map
 
-This workflow applies to the supervised dermatology classification experiments in which models are trained on HAM10000 and externally evaluated on the published public version of the BOSQUE dataset.
+- [`results_version_map.md`](results_version_map.md) explains the relationship
+  between the two result generations.
+- [`arxiv_v1_workflow.md`](arxiv_v1_workflow.md) documents the preserved
+  original notebook-based workflow.
+- [`revised_dissertation_workflow.md`](revised_dissertation_workflow.md)
+  documents the current locked, repeated, uncertainty-aware workflow.
 
-It covers:
+## Continuity with the public manuscript
 
-- dataset provenance;
-- preprocessing;
-- model training;
-- external validation;
-- subgroup evaluation;
-- statistical analysis;
-- experiment tracking;
-- generated tables and figures;
-- repository and container reproducibility.
+The revised experiments preserve the central scientific question of the
+public preprint:
 
-## Reporting and reproducibility conventions
+> Do skin-cancer classifiers trained using HAM10000 maintain acceptable and
+> equitable predictive performance when externally evaluated using BOSQUE?
 
-The revised workflow is intended to align with internationally recognized conventions for machine-learning and medical-AI studies, including:
+The revised workflow strengthens:
 
-- TRIPOD+AI for prediction model reporting;
-- PROBAST+AI for risk-of-bias and applicability assessment;
-- STARD-AI where the evaluation is interpreted as diagnostic accuracy assessment;
-- ML reproducibility checklist principles for datasets, code, environment, hyperparameters, seeds, metrics, and compute documentation.
+- public dataset provenance;
+- lesion-grouped source evaluation;
+- repeated model training;
+- saved prediction artifacts;
+- bootstrap uncertainty;
+- subgroup-gap reporting;
+- target adequacy and performance-preservation analysis;
+- multiplicity sensitivity;
+- deterministic table and figure rendering.
 
-These standards are used as methodological guidance for reporting and reproducibility.
+These changes can alter the numerical results.
 
-## Relationship with the public arXiv version
+Revised outputs must therefore be identified as revised dissertation or
+publication results rather than silently substituted for the original arXiv
+v1 outputs.
 
-The revised experiments are intended to provide a more reproducible and standardized version of the public results associated with the arXiv manuscript.
+## Development history
 
-The main objectives are:
+The revision was developed through branches including:
 
-- to use the published public BOSQUE dataset version whenever possible;
-- to make the experimental pipeline easier to reproduce from the repository;
-- to separate code, data, model artifacts, predictions, tables, and figures;
-- to document the computational environment;
-- to save per-image predictions for official evaluations;
-- to regenerate statistical tables and figures from scripts;
-- to report uncertainty and subgroup-level performance transparently.
+- `arxiv-results-revision-2026`
+- `r-publication-figures`
 
-## Repository versioning
+Branch names document development stages but are not immutable provenance
+identifiers.
 
-This work is developed on the branch:
-
-```text
-arxiv-results-revision-2026
+Reproducible reporting should use exact Git commit hashes and output
+manifests.

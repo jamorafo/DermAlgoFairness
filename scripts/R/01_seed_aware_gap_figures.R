@@ -28,7 +28,13 @@ input_file <- file.path(
   "bosque_light_dark_gap_by_model_seed.csv"
 )
 
-output_dir <- file.path("outputs", "figures-r")
+output_dir <- Sys.getenv(
+  "DERMALGO_FIGURE_OUTPUT_DIR",
+  unset = file.path(
+    "outputs",
+    "figures-r"
+  )
+)
 
 if (!file.exists(input_file)) {
   stop(
@@ -77,7 +83,87 @@ architecture_levels <- c(
   "VGG16"
 )
 
-seed_levels <- paste0("Seed ", 5:1)
+seed_config_file <- file.path(
+  "config",
+  "random_seeds.json"
+)
+
+if (!file.exists(seed_config_file)) {
+  stop(
+    "Seed configuration was not found: ",
+    seed_config_file
+  )
+}
+
+seed_config_lines <- readLines(
+  seed_config_file,
+  warn = FALSE
+)
+
+training_seed_lines <- grep(
+  '"training_run_[1-5]"[[:space:]]*:',
+  seed_config_lines,
+  value = TRUE
+)
+
+if (length(training_seed_lines) != 5L) {
+  stop(
+    "Expected five configured training-run values, found ",
+    length(training_seed_lines),
+    "."
+  )
+}
+
+training_run_numbers <- as.integer(
+  sub(
+    '.*"training_run_([1-5])".*',
+    "\\1",
+    training_seed_lines
+  )
+)
+
+training_seed_values <- sub(
+  '.*:[[:space:]]*([0-9]+),?[[:space:]]*$',
+  "\\1",
+  training_seed_lines
+)
+
+ordering <- order(training_run_numbers)
+
+training_run_numbers <- training_run_numbers[
+  ordering
+]
+
+training_seed_values <- training_seed_values[
+  ordering
+]
+
+if (
+  !identical(
+    training_run_numbers,
+    1:5
+  ) ||
+  anyDuplicated(
+    training_seed_values
+  )
+) {
+  stop(
+    "Configured training-run values are incomplete or duplicated."
+  )
+}
+
+training_run_labels <- setNames(
+  paste(
+    "Run",
+    training_run_numbers
+  ),
+  training_seed_values
+)
+
+run_levels <- paste(
+  "Run",
+  5:1
+)
 
 primary_data <- gap_data |>
   filter(metric_group == "Primary") |>
@@ -86,9 +172,18 @@ primary_data <- gap_data |>
       model_label,
       levels = architecture_levels
     ),
+    seed_key = format(
+      seed,
+      scientific = FALSE,
+      trim = TRUE
+    ),
     seed_label = factor(
-      paste0("Seed ", seed),
-      levels = seed_levels
+      unname(
+        training_run_labels[
+          seed_key
+        ]
+      ),
+      levels = run_levels
     ),
     direction = case_when(
       bootstrap_ci_low > 0 ~ "95% CI above 0",
@@ -104,6 +199,34 @@ primary_data <- gap_data |>
       )
     )
   )
+
+if (
+  anyNA(
+    primary_data$seed_label
+  ) ||
+  dplyr::n_distinct(
+    primary_data$seed_key
+  ) != 5L
+) {
+  unknown_values <- sort(
+    unique(
+      primary_data$seed_key[
+        is.na(
+          primary_data$seed_label
+        )
+      ]
+    )
+  )
+
+  stop(
+    "Figure 01 could not map all training values to ",
+    "Run 1--Run 5. Unmapped values: ",
+    paste(
+      unknown_values,
+      collapse = ", "
+    )
+  )
+}
 
 metric_specs <- list(
   recall = list(
@@ -130,7 +253,7 @@ make_gap_plot <- function(metric_name, specification) {
 
   if (nrow(plot_data) != 25L) {
     stop(
-      "Expected 25 architecture-seed rows for metric '",
+      "Expected 25 architecture-run rows for metric '",
       metric_name,
       "', but found ",
       nrow(plot_data),
@@ -162,7 +285,7 @@ make_gap_plot <- function(metric_name, specification) {
   ) +
     geom_vline(
       xintercept = 0,
-      linewidth = 0.55,
+      size = 0.55,
       linetype = "dashed",
       colour = "grey25"
     ) +
@@ -173,8 +296,7 @@ make_gap_plot <- function(metric_name, specification) {
       ),
       orientation = "y",
       width = 0,
-      linewidth = 0.8,
-      lineend = "round"
+      size = 0.8
     ) +
     geom_point(
       size = 2.7,
@@ -206,7 +328,6 @@ make_gap_plot <- function(metric_name, specification) {
     guides(
       colour = guide_legend(
         override.aes = list(
-          linewidth = 1.2,
           size = 3
         )
       )
