@@ -1,0 +1,46 @@
+\begin{table}[h!]
+\centering
+\small
+\caption{Prospective ORP sizing examples under independent-unit assumptions.}
+\label{tab:app-orp-prospective-sizing}
+\begin{minipage}[t]{0.47\textwidth}
+\centering
+\textbf{Panel A: equal subgroup sizes}\par\vspace{2pt}
+\scriptsize
+\begin{tabular}{@{}rrr@{}}
+\toprule
+\textbf{Absolute gap $\delta$} & \textbf{$n$/group, 80\%} & \textbf{$n$/group, 90\%} \\
+\midrule
+0.05 & 903 & 1208 \\
+0.10 & 248 & 332 \\
+0.15 & 119 & 159 \\
+0.20 & 71 & 95 \\
+\bottomrule
+\end{tabular}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.47\textwidth}
+\centering
+\textbf{Panel B: detection of at least one failure}\par\vspace{2pt}
+\scriptsize
+\begin{tabular}{@{}rrrr@{}}
+\toprule
+\textbf{Failure rate $q$} & \textbf{$n$, 80\%} & \textbf{$n$, 90\%} & \textbf{$n$, 95\%} \\
+\midrule
+0.1\% & 1609 & 2302 & 2995 \\
+1.0\% & 161 & 230 & 299 \\
+5.0\% & 32 & 45 & 59 \\
+\bottomrule
+\end{tabular}
+\end{minipage}
+
+\vspace{4pt}
+\parbox{0.98\textwidth}{\footnotesize
+\textit{Notes:} Panel A assumes $p_{\mathrm{light}}=0.85$,
+$p_{\mathrm{dark}}=0.85-\delta$, a two-sided $\alpha=0.05$ test, equal group
+sizes, and the large-sample two-proportion approximation. Panel B is exact for
+a zero-acceptance plan: $n$ is the number of independent eligible units needed
+for probability $1-\beta$ of observing at least one failure when the failure
+rate is $q$. Clustering, unequal weights, or non-exchangeable curation require
+larger nominal samples or simulation under the intended design.}
+\end{table}

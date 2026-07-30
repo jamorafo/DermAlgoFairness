@@ -1,0 +1,29 @@
+\begin{table}[h!]
+\centering
+\scriptsize
+\caption{Approximate power of the observed BOSQUE phototype-group sizes for
+binary performance contrasts.}
+\label{tab:app-orp-current-power}
+\setlength{\tabcolsep}{3.2pt}
+\renewcommand{\arraystretch}{1.10}
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+\textbf{Eligible units} & $n_{\mathrm{light}}$ & $n_{\mathrm{dark}}$ &
+\textbf{Power, $\delta=0.10$} & \textbf{Power, $\delta=0.15$} &
+\textbf{MDD, 80\%} & \textbf{MDD, 90\%} \\
+\midrule
+All observations (accuracy-like) & 105 & 46 & 29.6\% & 53.9\% & 0.212 & 0.250 \\
+Malignant lesions (recall) & 77 & 21 & 17.6\% & 31.5\% & 0.307 & 0.361 \\
+Benign lesions (specificity) & 28 & 25 & 15.0\% & 26.2\% & 0.348 & 0.408 \\
+\bottomrule
+\end{tabular}
+
+\vspace{2pt}
+\parbox{0.98\textwidth}{\footnotesize
+\textit{Notes:} MDD denotes the minimum detectable absolute light--dark gap.
+Calculations assume a light-condition performance of $0.85$, a dark-condition
+performance of $0.85-\delta$, a two-sided $\alpha=0.05$ test, independent
+eligible lesions, and the large-sample two-proportion approximation. The table
+is a prospective planning diagnostic; it is not a reanalysis of the bootstrap
+contrasts and is not applicable directly to F1-score or AUC--PR.}
+\end{table}

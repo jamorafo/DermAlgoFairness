@@ -83,3 +83,7 @@ __pycache__/
 !outputs/publication_tables/
 outputs/publication_tables/*
 !outputs/publication_tables/*.tex
+
+# Generated ORP sizing outputs
+!outputs/orp_sizing/
+!outputs/orp_sizing/**

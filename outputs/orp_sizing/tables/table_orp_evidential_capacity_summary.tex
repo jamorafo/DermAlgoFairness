@@ -1,0 +1,26 @@
+\begin{table}[h!]
+\centering
+\scriptsize
+\caption{Evidential capacity of the observed BOSQUE metric-specific denominators.}
+\label{tab:orp-evidential-capacity-summary}
+\setlength{\tabcolsep}{3.3pt}
+\renewcommand{\arraystretch}{1.10}
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Performance question} & $n_{\mathrm{light}}$ & $n_{\mathrm{dark}}$ &
+\textbf{Power, $\delta=0.10$} & \textbf{MDD, 80\%} & \textbf{Eligible units} \\
+\midrule
+Accuracy-like metric & 105 & 46 & 29.6\% & 0.212 & All lesions \\
+Recall / sensitivity & 77 & 21 & 17.6\% & 0.307 & Malignant lesions \\
+Specificity & 28 & 25 & 15.0\% & 0.348 & Benign lesions \\
+\bottomrule
+\end{tabular}
+
+\vspace{2pt}
+\parbox{0.98\textwidth}{\footnotesize
+\textit{Notes:} MDD is the minimum detectable absolute light--dark difference.
+Calculations assume $p_{\mathrm{light}}=0.85$,
+$p_{\mathrm{dark}}=0.85-\delta$, independent eligible lesions, and a two-sided
+$\alpha=0.05$ large-sample two-proportion approximation. They are planning
+diagnostics and do not replace the case-study bootstrap analysis.}
+\end{table}
