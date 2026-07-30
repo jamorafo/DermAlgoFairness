@@ -144,6 +144,30 @@ The R layer does not:
 Expensive analyses should not be repeated merely to modify table formatting,
 captions, terminology, or figure presentation.
 
+## Subgroup multiplicity and bootstrap validity
+
+The run-specific BOSQUE light--dark intervals are exploratory pointwise
+stability displays. They are not simultaneous confidence intervals and their
+interval-direction counts are not treated as multiplicity-adjusted
+discoveries. The separate architecture-level analysis defines a prespecified
+family of five architectures crossed with four primary metrics and reports
+Benjamini--Hochberg adjusted values together with Benjamini--Yekutieli
+sensitivity values. None of the 20 hypotheses was retained at 0.05 in the
+finalized output.
+
+The analysis code records the number of finite bootstrap draws because
+AUC--PR and AUC--ROC are undefined in a one-class resample. In the finalized
+10,000-replicate outputs, every run-specific subgroup contrast, every
+architecture-level primary contrast, and every primary TAC/ETC interval
+retained all 10,000 draws. Thus, no reported AUC--PR result depended on deleting
+undefined replicates.
+
+BOSQUE contains one image per recorded lesion. Patient and acquisition
+identifiers are not consistently available, so the target bootstrap assumes
+lesion-level exchangeability and no material residual patient/acquisition
+clustering. This is an inferential limitation, not a property established by
+the repository.
+
 <!-- ORP-SIZING-INTEGRATION -->
 ## ORP sizing boundary
 
