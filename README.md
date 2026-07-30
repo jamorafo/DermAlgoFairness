@@ -52,10 +52,12 @@ Main locations:
 - `outputs/tables/`
 - `outputs/publication_tables/`
 - `outputs/figures-r/`
+- `outputs/orp_sizing/` — ORP power, minimum-detectable-difference, and rare-failure diagnostics
 
 Documentation:
 
 - [`docs/revised_dissertation_workflow.md`](docs/revised_dissertation_workflow.md)
+- [`docs/orp_sizing_power.md`](docs/orp_sizing_power.md)
 
 ### Relationship between the two tracks
 
@@ -104,6 +106,7 @@ Five CNN architecture families are included:
 - `outputs/tables/` — finalized statistical-analysis CSV files.
 - `outputs/publication_tables/` — canonical CSV and LaTeX tables.
 - `outputs/figures-r/` — canonical PDF and PNG figures.
+- `outputs/orp_sizing/` — reproducible sizing CSVs, LaTeX tables, figures, and metadata.
 - `docs/` — documentation for both result generations.
 
 The singular directory `output/` belongs to the historical workflow. The
@@ -122,6 +125,7 @@ Python performs:
 - bootstrap estimation;
 - subgroup analysis;
 - multiplicity analysis;
+- ORP evidential-capacity, power, and rare-failure sizing diagnostics;
 - statistical summarization;
 - generation of finalized CSV files.
 
@@ -139,6 +143,11 @@ The R layer does not:
 
 Expensive analyses should not be repeated merely to modify table formatting,
 captions, terminology, or figure presentation.
+
+<!-- ORP-SIZING-INTEGRATION -->
+## ORP sizing boundary
+
+The ORP-sizing workflow is a lightweight planning and evidential-capacity analysis. It can be regenerated independently with `python scripts/25_generate_orp_sizing_power.py`. It does not retrain models, regenerate predictions, or rerun bootstrap and multiplicity analyses. See [`docs/orp_sizing_power.md`](docs/orp_sizing_power.md).
 
 ## Version identification
 

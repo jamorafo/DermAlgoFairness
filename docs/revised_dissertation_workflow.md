@@ -49,6 +49,14 @@ The target ORPs are:
 - BOSQUE light;
 - BOSQUE dark.
 
+Metric-specific eligible denominators are:
+
+- all lesions for accuracy-like metrics: 105 light and 46 dark;
+- malignant lesions for recall: 77 light and 21 dark;
+- benign lesions for specificity: 28 light and 25 dark.
+
+These denominators, rather than the nominal total of 151 lesions alone, determine the power and rare-failure exposure of the ORP for each question.
+
 ## Locked predictive systems
 
 Five architecture families are evaluated:
@@ -98,6 +106,7 @@ Important scripts include:
 - `scripts/21_make_architecture_level_bh_sensitivity.py`
 - `scripts/23_create_fixed_lesion_grouped_split.py`
 - `scripts/24_regenerate_final_publication_tables.py`
+- `scripts/25_generate_orp_sizing_power.py`
 
 ## R publication-rendering layer
 
@@ -149,7 +158,8 @@ The finalized interval analyses use 10,000 bootstrap replicates.
 - performance preservation;
 - light-minus-dark subgroup gaps;
 - finite-ORP interval precision;
-- architecture-level BH and BY multiplicity sensitivity.
+- architecture-level BH and BY multiplicity sensitivity;
+- metric-specific ORP power, minimum-detectable-difference, TAC-sizing, and rare-failure diagnostics.
 
 No architecture--metric light-minus-dark contrast is presented as significant
 after BH or BY adjustment in the finalized architecture-level sensitivity
@@ -179,6 +189,15 @@ tables.
 The canonical package contains ten figure basenames, each rendered as PDF and
 PNG.
 
+### ORP-sizing outputs
+
+- `outputs/orp_sizing/csv/` — numerical planning and diagnostic outputs;
+- `outputs/orp_sizing/tables/` — generated LaTeX tables;
+- `outputs/orp_sizing/figures/` — PDF and PNG power and rare-failure curves;
+- `outputs/orp_sizing/orp_sizing_metadata.json` — assumptions, methods, counts, and software versions.
+
+These outputs are generated independently of model training and bootstrap estimation.
+
 ## Regeneration boundary
 
 Publication tables and figures may be regenerated from finalized CSV files
@@ -201,6 +220,8 @@ Examples include changes to:
 Formatting, captions, terminology, or figure styling do not require
 re-estimation.
 
+ORP-sizing calculations may also be regenerated independently because they use prespecified counts and planning assumptions rather than prediction-level model outputs. See [`orp_sizing_power.md`](orp_sizing_power.md).
+
 ## Relationship with arXiv v1
 
 This workflow is a revision and extension of the original dermatology case
@@ -221,3 +242,5 @@ Important revisions include:
 
 Read [`results_version_map.md`](results_version_map.md) before comparing
 revised numerical outputs with the original preprint.
+
+<!-- ORP-SIZING-WORKFLOW -->
